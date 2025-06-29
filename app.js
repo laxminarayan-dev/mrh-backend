@@ -297,6 +297,9 @@ app.post("/api/dashboard-data", (req, res) => {
 app.get("*",(req,res)=>{
     res.send(404);
 }
+app.post("*",(req,res)=>{
+    res.send(404);
+}
 
 app.listen(PORT, () => {
     console.log(`Server listining on port ${PORT}`);
