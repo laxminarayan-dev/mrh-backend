@@ -345,18 +345,34 @@ app.post("/api/dashboard-data", (req, res) => {
     })
 })
 
+app.post("/api/orders-all", (req, res) => {
+    res.send(orderData);
+})
+
 app.post("/api/order/:orderId", (req, res) => {
     const orderId = req.params.orderId;
     const result = orderData.find(orders => orders.orderId == orderId)
     res.send(result)
 })
+app.post("/api/updateOrder/:orderId", (req, res) => {
+    const updatedOrder = req.body
+    const index = orderData.findIndex(order => order.orderId === req.body.orderId);
 
-app.get("*", (req, res) => {
-    res.send(404);
+    if (index !== -1) {
+        orderData[index] = { ...orderData[index], ...updatedOrder };
+        res.status(200).send(req.body)
+        console.log("Updated orderData:", orderData);
+    } else {
+        console.log("Order not found");
+    }
+
 })
-app.post("*", (req, res) => {
-    res.send(404);
-})
+
+// Catch-all 404 handler (safe version)
+app.use((req, res) => {
+    res.status(404).send("404 Not Found");
+});
+
 
 app.listen(PORT, () => {
     console.log(`Server listining on port ${PORT}`);
