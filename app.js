@@ -361,9 +361,8 @@ app.post("/api/updateOrder/:orderId", (req, res) => {
     if (index !== -1) {
         orderData[index] = { ...orderData[index], ...updatedOrder };
         res.status(200).send(req.body)
-        console.log("Updated orderData:", orderData);
     } else {
-        console.log("Order not found");
+        res.status(500).send("Internal Server Error");
     }
 
 })
