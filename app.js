@@ -70,7 +70,7 @@ const tablesData = {
                 amount: 1500,
                 status: "Delivered",
                 paymentMethod: "Credit Card",
-                deliveredOnTime: "2025-06-12T10:00",
+                deliveredDateTime: "2025-06-12T10:00",
                 actions: "",
             },
             {
@@ -82,7 +82,7 @@ const tablesData = {
                 amount: 2500,
                 status: "Pending",
                 paymentMethod: "Cash on Delivery",
-                deliveredOnTime: "",
+                deliveredDateTime: "",
                 actions: "",
             },
             {
@@ -94,7 +94,7 @@ const tablesData = {
                 amount: 1800,
                 status: "Shipped",
                 paymentMethod: "UPI",
-                deliveredOnTime: "",
+                deliveredDateTime: "",
                 actions: "",
             },
             {
@@ -106,7 +106,7 @@ const tablesData = {
                 amount: 3200,
                 status: "Delivered",
                 paymentMethod: "Net Banking",
-                deliveredOnTime: "2025-06-20T13:20",
+                deliveredDateTime: "2025-06-20T13:20",
                 actions: "",
             },
         ],
@@ -165,7 +165,7 @@ const tablesData = {
                 options: ["Cash on Delivery", "Credit Card", "UPI", "Net Banking"],
             },
             {
-                name: "deliveredOnTime",
+                name: "deliveredDateTime",
                 label: "Delivered On & Time",
                 type: "datetime-local",
                 required: false,
@@ -285,6 +285,56 @@ const tablesData = {
         ],
     }
 }
+const orderData = [
+    {
+        orderId: "101",
+        customerName: "Alice Johnson",
+        orderItem: "Chocolate Cake",
+        quantity: 2,
+        orderDateTime: "2025-06-10T14:30",
+        amount: 1500,
+        status: "Delivered",
+        paymentMethod: "Credit Card",
+        deliveredDateTime: "2025-06-12T10:00",
+
+    },
+    {
+        orderId: "102",
+        customerName: "Bob Smith",
+        orderItem: "Veg Pizza",
+        quantity: 1,
+        orderDateTime: "2025-06-12T09:15",
+        amount: 2500,
+        status: "Pending",
+        paymentMethod: "Cash on Delivery",
+        deliveredDateTime: "",
+
+    },
+    {
+        orderId: "103",
+        customerName: "Charlie Lee",
+        orderItem: "Pasta",
+        quantity: 3,
+        orderDateTime: "2025-06-15T16:45",
+        amount: 1800,
+        status: "Shipped",
+        paymentMethod: "UPI",
+        deliveredDateTime: "",
+
+    },
+    {
+        orderId: "104",
+        customerName: "Diana Prince",
+        orderItem: "Burger",
+        quantity: 4,
+        orderDateTime: "2025-06-18T11:00",
+        amount: 3200,
+        status: "Delivered",
+        paymentMethod: "Net Banking",
+        deliveredDateTime: "2025-06-20T13:20",
+
+    },
+]
 
 app.use(cors());
 app.use(express.json())
@@ -293,6 +343,12 @@ app.post("/api/dashboard-data", (req, res) => {
     res.send({
         kpiData, chartData, tablesData
     })
+})
+
+app.post("/api/order/:orderId", (req, res) => {
+    const orderId = req.params.orderId;
+    const result = orderData.find(orders => orders.orderId == orderId)
+    res.send(result)
 })
 
 app.listen(PORT, () => {
