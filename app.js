@@ -344,17 +344,18 @@ app.post("/api/dashboard-data", (req, res) => {
         kpiData, chartData, tablesData
     })
 })
-app.get("*",(req,res)=>{
-    res.send(404);
-}
-app.post("*",(req,res)=>{
-    res.send(404);
-}
 
 app.post("/api/order/:orderId", (req, res) => {
     const orderId = req.params.orderId;
     const result = orderData.find(orders => orders.orderId == orderId)
     res.send(result)
+})
+
+app.get("*", (req, res) => {
+    res.send(404);
+})
+app.post("*", (req, res) => {
+    res.send(404);
 })
 
 app.listen(PORT, () => {
