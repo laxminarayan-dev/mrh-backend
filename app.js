@@ -366,7 +366,15 @@ app.post("/api/updateOrder/:orderId", (req, res) => {
     }
 
 })
-
+app.post("/api/addOrder", (req, res) => {
+    console.log(req.body);
+    try {
+        orderData.push(req.body)
+        res.send(200)
+    } catch (error) {
+        res.send(500)
+    }
+})
 // Catch-all 404 handler (safe version)
 app.use((req, res) => {
     res.status(404).send("404 Not Found");
