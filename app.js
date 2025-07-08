@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const e = require("express");
+const orderRoute = require("./routes/orders")
 const app = express();
 const PORT = 8000;
 
@@ -286,117 +286,21 @@ const tablesData = {
         ],
     }
 }
-const orderData = [
-    {
-        orderId: "101",
-        customerName: "Alice Johnson",
-        orderItem: "Chocolate Cake",
-        quantity: 2,
-        orderDateTime: "2025-06-10T14:30",
-        amount: 1500,
-        status: "Delivered",
-        paymentMethod: "Credit Card",
-        deliveredDateTime: "2025-06-12T10:00",
-
-    },
-    {
-        orderId: "102",
-        customerName: "Bob Smith",
-        orderItem: "Veg Pizza",
-        quantity: 1,
-        orderDateTime: "2025-06-12T09:15",
-        amount: 2500,
-        status: "Pending",
-        paymentMethod: "Cash on Delivery",
-        deliveredDateTime: "",
-
-    },
-    {
-        orderId: "103",
-        customerName: "Charlie Lee",
-        orderItem: "Pasta",
-        quantity: 3,
-        orderDateTime: "2025-06-15T16:45",
-        amount: 1800,
-        status: "Shipped",
-        paymentMethod: "UPI",
-        deliveredDateTime: "",
-
-    },
-    {
-        orderId: "104",
-        customerName: "Diana Prince",
-        orderItem: "Burger",
-        quantity: 4,
-        orderDateTime: "2025-06-18T11:00",
-        amount: 3200,
-        status: "Delivered",
-        paymentMethod: "Net Banking",
-        deliveredDateTime: "2025-06-20T13:20",
-
-    },
-]
-
 app.use(cors());
 app.use(express.json())
+
+// Orders Routes
+app.use("/api/orders", orderRoute);
 
 app.post("/api/dashboard-data", (req, res) => {
     res.send({
         kpiData, chartData, tablesData
     })
 })
-
-app.post("/api/orders-all", (req, res) => {
-    res.send(orderData);
-})
-
-app.post("/api/order/:orderId", (req, res) => {
-    const orderId = req.params.orderId;
-    const result = orderData.find(orders => orders.orderId == orderId)
-    res.send(result)
-})
-app.post("/api/updateOrder/:orderId", (req, res) => {
-    const updatedOrder = req.body
-    const index = orderData.findIndex(order => order.orderId === req.body.orderId);
-
-    if (index !== -1) {
-        orderData[index] = { ...orderData[index], ...updatedOrder };
-        res.status(200).send(req.body)
-    } else {
-        res.status(500).send("Internal Server Error");
-    }
-
-})
-app.post("/api/addOrder", (req, res) => {
-    console.log(req.body);
-    try {
-        orderData.push(req.body)
-        res.send(200)
-    } catch (error) {
-        res.send(500)
-    }
-})
-app.post("/api/orderDelete/:orderId", (req, res) => {
-    const orderId = req.params.orderId
-    try {
-        const index = orderData.findIndex(order => order.orderId === orderId);
-        if (index >= 0) {
-            orderData.splice(index, 1)
-            res.send(200)
-        }
-        else {
-            res.send(500)
-        }
-    }
-    catch (e) {
-        res.send(500)
-    }
-})
 // Catch-all 404 handler (safe version)
 app.use((req, res) => {
     res.status(404).send("404 Not Found");
 });
-
 
 app.listen(PORT, () => {
     console.log(`Server listining on port ${PORT}`);
