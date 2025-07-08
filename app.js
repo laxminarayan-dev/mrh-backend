@@ -1,5 +1,6 @@
 const express = require("express");
 const cors = require("cors");
+const e = require("express");
 const app = express();
 const PORT = 8000;
 
@@ -372,6 +373,22 @@ app.post("/api/addOrder", (req, res) => {
         orderData.push(req.body)
         res.send(200)
     } catch (error) {
+        res.send(500)
+    }
+})
+app.post("/api/orderDelete/:orderId", (req, res) => {
+    const orderId = req.params.orderId
+    try {
+        const index = orderData.findIndex(order => order.orderId === orderId);
+        if (index >= 0) {
+            orderData.splice(index, 1)
+            res.send(200)
+        }
+        else {
+            res.send(500)
+        }
+    }
+    catch (e) {
         res.send(500)
     }
 })
