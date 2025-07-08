@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const orderRoute = require("./routes/orders")
+const transactionRoute = require("./routes/transactions")
 const app = express();
 const PORT = 8000;
 
@@ -291,6 +292,7 @@ app.use(express.json())
 
 // Orders Routes
 app.use("/api/orders", orderRoute);
+app.use("/api/transactions", transactionRoute);
 
 app.post("/api/dashboard-data", (req, res) => {
     res.send({
