@@ -11,6 +11,7 @@ const orderData = [
         status: "Delivered",
         paymentMethod: "Credit Card",
         deliveredDateTime: "2025-06-12T10:00",
+        deliveredAddress: "C-202 Lakeview Residency, Salt Lake Sector V, Kolkata, West Bengal – 700091",
 
     },
     {
@@ -23,6 +24,7 @@ const orderData = [
         status: "Pending",
         paymentMethod: "Cash on Delivery",
         deliveredDateTime: "",
+        deliveredAddress: "102 Krishna Residency, MG Road, Pune, Maharashtra – 411001",
 
     },
     {
@@ -35,6 +37,7 @@ const orderData = [
         status: "Shipped",
         paymentMethod: "UPI",
         deliveredDateTime: "",
+        deliveredAddress: "Flat 3B Lotus Apartments, Civil Lines, Jaipur, Rajasthan – 302006",
 
     },
     {
@@ -47,6 +50,7 @@ const orderData = [
         status: "Delivered",
         paymentMethod: "Net Banking",
         deliveredDateTime: "2025-06-20T13:20",
+        deliveredAddress: "45 Ashoka Nagar, Near Central Market, Bhopal, Madhya Pradesh – 462003",
 
     },
 ]

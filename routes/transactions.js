@@ -11,6 +11,7 @@ const transactionData = [
         status: "Successful",
         reference: "INV-101",
 
+
     },
     {
         transactionId: "T002",
@@ -21,6 +22,7 @@ const transactionData = [
         method: "Cash",
         status: "Pending",
         reference: "ORD-102",
+
 
     },
     {
