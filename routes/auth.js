@@ -140,38 +140,3 @@ router.post("/send-otp", async (req, res) => {
 
 module.exports = router;
 
-
-
-DB_URL = mongodb + srv://mrhalwai:7599670067@halwai@mrhalwaicluster.ny8akwz.mongodb.net/?appName=MrHalwaiCluster
-JWT_SECRET = qwertyuiozxcvbkjshdfkahsvbfoauwgefluyr9324urkasdjfkjvbl
-
-
-
-
-EMAIL_HOST = smtp.hostinger.com
-EMAIL_PORT = 993
-EMAIL_SECURE = true
-EMAIL_USER = support@mrhalwai.in
-EMAIL_FROM = support@mrhalwai.in
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-EMAIL_PASS = Mrhalwai@7599670067
