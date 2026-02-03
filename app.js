@@ -1,7 +1,9 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const orderRoute = require("./routes/orders")
 const transactionRoute = require("./routes/transactions")
+const authRoute = require("./routes/auth")
 const app = express();
 const PORT = 8000;
 
@@ -154,12 +156,17 @@ app.use(express.json())
 // Orders Routes
 app.use("/api/orders", orderRoute);
 app.use("/api/transactions", transactionRoute);
+app.use("/api/auth", authRoute);
 
 app.post("/api/dashboard-data", (req, res) => {
     res.send({
         kpiData, chartData, tablesData
     })
 })
+
+app.get("/", (req, res) => {
+    res.send("Welcome to MR Halwai Backend API");
+});
 // Catch-all 404 handler (safe version)
 app.use((req, res) => {
     res.status(404).send("404 Not Found");
