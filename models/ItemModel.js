@@ -37,6 +37,7 @@ const itemSchema = new mongoose.Schema({
         enum: ['south-indian', 'chinese', 'north-indian'],
         default: 'south-indian'
     },
+    includes: [String],
 
     // Pricing
     originalPrice: {
@@ -74,7 +75,7 @@ const itemSchema = new mongoose.Schema({
     },
 
     // Images
-    images: [{
+    images: {
         url: {
             type: String,
             required: true
@@ -83,7 +84,7 @@ const itemSchema = new mongoose.Schema({
             type: String,
             default: ''
         },
-    }],
+    },
     thumbnail: {
         type: String,
         default: ''
@@ -166,6 +167,6 @@ const itemSchema = new mongoose.Schema({
 });
 
 
-const Item = mongoose.model('Item', itemSchema);
+const Item = mongoose.model('Item', itemSchema, 'items');
 
 module.exports = Item;

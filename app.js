@@ -1,11 +1,12 @@
-require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const orderRoute = require("./routes/orders")
 const transactionRoute = require("./routes/transactions")
 const authRoute = require("./routes/auth")
+const { connectDB } = require("./db/connection");
 const app = express();
 const PORT = 8000;
+require("dotenv").config();
 
 const kpiData = [
     {
@@ -158,6 +159,7 @@ app.use("/api/orders", orderRoute);
 app.use("/api/transactions", transactionRoute);
 app.use("/api/auth", authRoute);
 
+
 app.post("/api/dashboard-data", (req, res) => {
     res.send({
         kpiData, chartData, tablesData
@@ -167,12 +169,26 @@ app.post("/api/dashboard-data", (req, res) => {
 app.get("/", (req, res) => {
     res.send("Welcome to MR Halwai Backend API");
 });
+
 // Catch-all 404 handler (safe version)
 app.use((req, res) => {
     res.status(404).send("404 Not Found");
 });
 
-app.listen(PORT, () => {
-    console.log(`Server listining on port ${PORT}`);
+// Connect to MongoDB and start server
+const startServer = async () => {
+    try {
+        await connectDB();
+        app.listen(PORT, () => {
+            console.log(`
+==================================
+✓ Server listening on port ${PORT}
+==================================`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+};
 
-})
+startServer();
