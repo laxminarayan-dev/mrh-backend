@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const orderRoute = require("./routes/orders")
@@ -6,7 +7,6 @@ const authRoute = require("./routes/auth")
 const { connectDB } = require("./db/connection");
 const app = express();
 const PORT = 8000;
-require("dotenv").config();
 
 const kpiData = [
     {

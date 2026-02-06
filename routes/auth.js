@@ -5,6 +5,39 @@ const otpStore = new Map();
 const resetOtpStore = new Map();
 const Users = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
+let transporter = null;
+const getTransporter = async () => {
+    if (transporter) return transporter;
+
+    console.log(process.env.EMAIL_HOST, process.env.EMAIL_PORT, process.env.EMAIL_SECURE)
+
+    transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: Number(process.env.EMAIL_PORT),
+        secure: process.env.EMAIL_SECURE === "true",
+        auth: {
+            user: process.env.EMAIL_USER,
+            pass: process.env.EMAIL_PASS || process.env.EMAIL_PASSWORD,
+        },
+        pool: true, // 🔥 VERY IMPORTANT
+        maxConnections: 5,
+        maxMessages: 100,
+    });
+
+    return transporter;
+};
+
+(async () => {
+    try {
+        const t = await getTransporter();
+        await t.verify();
+        console.log("SMTP ready");
+    } catch (err) {
+        console.error("SMTP failed", err);
+    }
+})();
+
+
 
 const generateToken = (user) => {
     const JWT_KEY = process.env.JWT_SECRET_KEY;
@@ -123,17 +156,12 @@ router.post("/send-otp", async (req, res) => {
         return res.status(400).send({ message: "email is already registered" });
     }
 
-    const transporter = buildTransporter();
+    const transporter = await getTransporter();
+
     if (!transporter) {
         return res.status(500).send({
             message: "Email service not configured",
         });
-    }
-
-    try {
-        await transporter.verify();
-    } catch (error) {
-        return res.status(500).send({ message: "Email service unavailable" });
     }
 
     const otp = generateOtp();
@@ -226,17 +254,7 @@ router.post("/forgot-password/send-otp", async (req, res) => {
         return res.status(404).send({ message: "user not found" });
     }
 
-    const transporter = buildTransporter();
-    if (!transporter) {
-        return res.status(500).send({ message: "Email service not configured" });
-    }
-
-    try {
-        await transporter.verify();
-    } catch (error) {
-        return res.status(500).send({ message: "Email service unavailable" });
-    }
-
+    const transporter = await getTransporter();
     const otp = generateOtp();
     const expiresAt = Date.now() + 5 * 60 * 1000;
     resetOtpStore.set(email, { otp, expiresAt, verified: false, verifiedUntil: null });
