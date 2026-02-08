@@ -3,7 +3,7 @@ const nodemailer = require("nodemailer");
 const router = express.Router();
 const otpStore = new Map();
 const resetOtpStore = new Map();
-const Users = require("../models/UserModel");
+const User = require("../models/UserModel");
 const jwt = require("jsonwebtoken");
 let transporter = null;
 const getTransporter = async () => {
@@ -82,7 +82,7 @@ const generateOtp = () => String(Math.floor(100000 + Math.random() * 900000));
 ////////////////////////////////// LOGIN ///////////////////////////////////
 
 //Verify Token (JWT)
-router.post("/verify-token", (req, res) => {
+router.post("/verify-token", async (req, res) => {
     const { token } = req.body || {};
     const JWT_KEY = process.env.JWT_SECRET_KEY;
     if (!JWT_KEY) {
@@ -95,7 +95,11 @@ router.post("/verify-token", (req, res) => {
 
     try {
         const decoded = jwt.verify(token, JWT_KEY);
-        return res.status(200).json({ message: "token valid", user: decoded });
+        const user = await User.findOne({ email: decoded.email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+        return res.status(200).json({ message: "token valid", user });
     } catch (error) {
         return res.status(401).json({ message: "Invalid token" });
     }
@@ -110,7 +114,7 @@ router.post("/login", async (req, res) => {
         return res.status(400).send({ message: "email and password are required" });
     }
     try {
-        const user = await Users.findOne({ email }).select("+password");
+        const user = await User.findOne({ email }).select("+password");
         console.log(user);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -150,7 +154,7 @@ router.post("/send-otp", async (req, res) => {
         return res.status(400).send({ message: "email is required" });
     }
 
-    const existing = await Users.findOne({ email });
+    const existing = await User.findOne({ email });
 
     if (existing) {
         return res.status(400).send({ message: "email is already registered" });
@@ -216,7 +220,7 @@ router.post("/verify-otp", async (req, res) => {
     }
 
     try {
-        const response = await Users.create(userDetail);
+        const response = await User.create(userDetail);
         console.log("User registered:", response);
         otpStore.delete(email);
 
@@ -249,9 +253,9 @@ router.post("/forgot-password/send-otp", async (req, res) => {
         return res.status(400).send({ message: "email is required" });
     }
 
-    const existing = await Users.findOne({ email });
+    const existing = await User.findOne({ email });
     if (!existing) {
-        return res.status(404).send({ message: "user not found" });
+        return res.status(401).send({ message: "user not found" });
     }
 
     const transporter = await getTransporter();
@@ -330,7 +334,7 @@ router.post("/forgot-password/reset", async (req, res) => {
     }
 
     try {
-        const updatedUser = await Users.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
             { email },
             { password: newPassword },
             { new: true }

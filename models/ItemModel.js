@@ -169,4 +169,7 @@ const itemSchema = new mongoose.Schema({
 
 const Item = mongoose.model('Item', itemSchema, 'items');
 
-module.exports = Item;
+module.exports = {
+    Item,
+    itemSchema
+}

@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-
 const addressSchema = new mongoose.Schema({
     street: {
         type: String,
@@ -59,26 +58,10 @@ const userSchema = new mongoose.Schema({
     addresses: [addressSchema],
 
     // Cart & Favorites
-    cart: [{
-        item: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'MenuItem'
-        },
-        quantity: {
-            type: Number,
-            required: true,
-            min: 1,
-            default: 1
-        },
-        specialInstructions: {
-            type: String,
-            default: ''
-        },
-        addedAt: {
-            type: Date,
-            default: Date.now
-        }
-    }],
+    cart: {
+        type: [mongoose.Schema.Types.Mixed], // Assuming itemSchema is defined elsewhere
+        default: []
+    },
 
     favorites: [{
         type: mongoose.Schema.Types.ObjectId,

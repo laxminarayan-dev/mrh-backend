@@ -158,6 +158,7 @@ app.use(express.json())
 app.use("/api/orders", orderRoute);
 app.use("/api/transactions", transactionRoute);
 app.use("/api/auth", authRoute);
+app.use("/api/user", require("./routes/user"))
 
 
 app.post("/api/dashboard-data", (req, res) => {
