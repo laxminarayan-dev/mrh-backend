@@ -24,6 +24,17 @@ const addressSchema = new mongoose.Schema({
     }
 }, { _id: true });
 
+const newAddressSchema = new mongoose.Schema({
+    coordinates: [Number, Number], // [latitude, longitude]
+    formattedAddress: {
+        type: String,
+    },
+    isDefault: {
+        type: Boolean,
+        default: false
+    }
+}, { _id: true });
+
 const userSchema = new mongoose.Schema({
     // Basic Information
     fullName: {
@@ -55,7 +66,10 @@ const userSchema = new mongoose.Schema({
     },
 
     // Delivery Addresses
-    addresses: [addressSchema],
+    addresses: {
+        type: [newAddressSchema],
+        default: []
+    },
 
     // Cart & Favorites
     cart: {
