@@ -34,4 +34,28 @@ router.post("/update/cart", async (req, res) => {
     }
 });
 
+router.post("/save-address", async (req, res) => {
+    try {
+        const { coordinates, formattedAddress, isDefault } = req.body;
+        if (!coordinates || !formattedAddress) {
+            return res.status(400).json({ error: "Coordinates and formatted address are required" });
+        }
+        const newAddress = {
+            _id: new mongoose.Types.ObjectId(),
+            coordinates,
+            formattedAddress,
+            isDefault
+        };
+        const user = await User.findOne({ email: req.user.email });
+        if (isDefault) {
+            user.addresses.forEach(addr => addr.isDefault = false);
+        }
+        user.addresses.push(newAddress);
+        await user.save();
+        return res.json({ success: true, address: newAddress });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
 module.exports = router;
