@@ -25,17 +25,11 @@ const orderItemSchema = new mongoose.Schema({
 const orderSchema = new mongoose.Schema(
     {
         // User who placed order
-        user: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-            index: true,
-        },
+        userDetail: [mongoose.Schema.Types.Mixed], // snapshot of user details at order time
 
         // Ordered items
-        items: {
-            type: [orderItemSchema],
-            required: true,
+        orderItems: {
+            type: [mongoose.Schema.Types.Mixed], // array of orderItemSchema snapshots
         },
 
         // Pricing
@@ -61,19 +55,11 @@ const orderSchema = new mongoose.Schema(
         },
 
         // Delivery address snapshot
-        deliveryAddress: {
-            street: String,
-            apartment: String,
-            city: String,
-            state: String,
-            zipCode: String,
-            landmark: String,
-        },
+        deliveryAddress: [mongoose.Schema.Types.Mixed],
 
         // Payment
         paymentMethod: {
             type: String,
-            enum: ["cod", "upi", "card", "wallet"],
             required: true,
         },
         paymentStatus: {
@@ -105,12 +91,6 @@ const orderSchema = new mongoose.Schema(
             maxlength: 300,
         },
 
-        // Tracking
-        orderNumber: {
-            type: String,
-            unique: true,
-            index: true,
-        },
     },
     {
         timestamps: true, // createdAt = order date
@@ -118,4 +98,7 @@ const orderSchema = new mongoose.Schema(
 );
 
 const Order = mongoose.model("Order", orderSchema, "orders");
-module.exports = Order;
+module.exports = {
+    Order,
+    orderSchema
+};

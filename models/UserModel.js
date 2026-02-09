@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { orderSchema } = require('./Order');
 const addressSchema = new mongoose.Schema({
     street: {
         type: String,
@@ -83,10 +84,7 @@ const userSchema = new mongoose.Schema({
     }],
 
     // Order History & Stats
-    orders: [{
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Order'
-    }],
+    orders: [orderSchema], // Embedding order schema for quick access
 
     // Payment Information
     savedPaymentMethods: [{
