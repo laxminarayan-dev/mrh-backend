@@ -2,7 +2,7 @@ const { Server } = require("socket.io");
 const users = new Map();
 const CreateSocket = (http) => {
     const io = new Server(http, {
-        path: "/mrh-backend/socket.io",
+        path: "/socket.io",
         cors: {
             origin: process.env.FRONTEND_URL, // frontend URL
             methods: ["GET", "POST"]
