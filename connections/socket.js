@@ -2,7 +2,7 @@ const { Server } = require("socket.io");
 const users = new Map();
 const CreateSocket = (http) => {
     const io = new Server(http, {
-        path: "/mrh-backend/socket.io",
+        // path: "/mrh-backend/socket.io",
         cors: {
             origin: [
                 "https://mrhalwai.in",
