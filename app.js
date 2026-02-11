@@ -1,11 +1,15 @@
 require("dotenv").config();
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const orderRoute = require("./routes/orders")
 const transactionRoute = require("./routes/transactions")
 const authRoute = require("./routes/auth")
-const { connectDB } = require("./db/connection");
+const { connectDB } = require("./connections/db");
+const CreateSocket = require("./connections/socket");
 const app = express();
+const server = http.createServer(app);
+CreateSocket(server);
 const PORT = 8000;
 
 const kpiData = [
@@ -180,7 +184,7 @@ app.use((req, res) => {
 const startServer = async () => {
     try {
         await connectDB();
-        app.listen(PORT, () => {
+        server.listen(PORT, () => {
             console.log(`
 ==================================
 ✓ Server listening on port ${PORT}
