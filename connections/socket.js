@@ -3,7 +3,10 @@ const users = new Map();
 const CreateSocket = (http) => {
     const io = new Server(http, {
         cors: {
-            origin: process.env.FRONTEND_URL, // frontend URL
+            origin: [
+                "https://mrhalwai.in",
+                "https:www.mrhalwai.in",
+            ], // frontend URL
             methods: ["GET", "POST"]
         }
     });
