@@ -141,6 +141,87 @@ router.post("/login", async (req, res) => {
 
 });
 
+router.post("/login/send-otp", async (req, res) => {
+    const { email } = req.body || {};
+    if (!email) {
+        return res.status(400).send({ message: "email is required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+        return res.status(404).send({ message: "User not found" });
+    }
+
+    const transporter = await getTransporter();
+    if (!transporter) {
+        return res.status(500).send({
+            message: "Email service not configured",
+        });
+    }
+
+    const otp = generateOtp();
+    const expiresAt = Date.now() + 5 * 60 * 1000;
+    otpStore.set(email, { otp, expiresAt });
+
+    const fromAddress = process.env.EMAIL_FROM || process.env.EMAIL_USER || process.env.EMAIL;
+
+    try {
+        await transporter.sendMail({
+            from: fromAddress,
+            to: email,
+            subject: "Your MR Halwai login verification code",
+            html: `
+            <div style="font-family:Arial">
+                <h2>MR Halwai</h2>
+                <p>Your login verification code is:</p>
+                <h1>${otp}</h1>
+                <p>This code is valid for 5 minutes.</p>
+                <p>If you didn't request this, ignore this email.</p>
+            </div>`,
+        });
+
+        return res.status(200).send({ message: "OTP sent" });
+    } catch (error) {
+        return res.status(500).send({ message: "Failed to send OTP" });
+    }
+});
+
+router.post("/login/verify-otp", async (req, res) => {
+    const { email, otp } = req.body || {};
+    if (!email || !otp) {
+        return res.status(400).send({ message: "email and otp are required" });
+    }
+    const otpRecord = otpStore.get(email);
+    if (!otpRecord) {
+        return res.status(401).json({ message: "OTP expired or not found" });
+    }
+    if (Date.now() > otpRecord.expiresAt) {
+        otpStore.delete(email);
+        return res.status(401).json({ message: "OTP expired" });
+    }
+    if (String(otpRecord.otp) !== String(otp)) {
+        return res.status(401).json({ message: "Invalid OTP" });
+    }
+    const user = await User
+
+        .findOne({ email })
+        .select("-password");
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    const token = generateToken(user);
+    if (!token) {
+        return res.status(500).json({ message: "JWT secret not configured" });
+    }
+    otpStore.delete(email);
+    return res.status(200).send({
+        message: "Logged in successfully",
+        token,
+        user,
+    });
+}
+);
+
 
 
 ////////////////////////////////// SIGNUP ///////////////////////////////////

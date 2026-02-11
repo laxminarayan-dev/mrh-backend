@@ -28,6 +28,15 @@ router.post("/update/cart", async (req, res) => {
     }
 });
 
+router.get("/cart", async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.user.email });
+        return res.json({ success: true, cart: user.cart });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
 router.post("/save-address", async (req, res) => {
     try {
         const { coordinates, formattedAddress, isDefault } = req.body;
