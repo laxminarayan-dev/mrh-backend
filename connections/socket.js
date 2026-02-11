@@ -2,14 +2,17 @@ const { Server } = require("socket.io");
 const users = new Map();
 const CreateSocket = (http) => {
     const io = new Server(http, {
+        path: "/mrh-backend/socket.io",
         cors: {
             origin: [
                 "https://mrhalwai.in",
-                "https://www.mrhalwai.in",
-            ], // frontend URL
-            methods: ["GET", "POST"]
+                "https://www.mrhalwai.in"
+            ],
+            methods: ["GET", "POST"],
+            credentials: true
         }
     });
+
     io.on("connection", (socket) => {
 
         console.log("Socket connected:", socket.id);
