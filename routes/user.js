@@ -11,13 +11,10 @@ router.post("/update/cart", async (req, res) => {
     console.log("STEP 1: Route hit");
 
     try {
-        console.log("STEP 2: Email:", req.user.email);
-        console.log("STEP 3: Items:", req.body.items);
         const items = req.body.items.map(item => ({
             ...item,
             _id: new mongoose.Types.ObjectId(item._id),
         }));
-        console.log("STEP 4: Before DB");
 
         const result = await User.findOneAndUpdate(
             { email: req.user.email },
@@ -25,11 +22,8 @@ router.post("/update/cart", async (req, res) => {
             { new: true }
         );
 
-        console.log("STEP 5: After DB", result);
-
         return res.json({ success: true });
     } catch (err) {
-        console.log("STEP 6: ERROR", err);
         return res.status(500).json({ error: err.message });
     }
 });

@@ -25,7 +25,7 @@ const itemSchema = new mongoose.Schema({
     category: {
         type: String,
         required: [true, 'Category is required'],
-        enum: ['dosa', 'uttapam', 'chinese', 'thali', 'pav-bhaji'],
+        enum: ['dosa', 'uttapam', 'chinese', 'thali', 'pav-bhaji', 'sweets'],
         index: true
     },
     subCategory: {

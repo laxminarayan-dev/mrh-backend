@@ -1,31 +1,14 @@
 const mongoose = require("mongoose");
 
-const orderItemSchema = new mongoose.Schema({
-    item: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Item",
-        required: true,
-    },
-    name: {
-        type: String, // snapshot (item name at order time)
-        required: true,
-    },
-    price: {
-        type: Number, // price at order time
-        required: true,
-        min: 0,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-    },
-});
 
 const orderSchema = new mongoose.Schema(
     {
         // User who placed order
-        userDetail: [mongoose.Schema.Types.Mixed], // snapshot of user details at order time
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+        },
 
         // Ordered items
         orderItems: {
@@ -53,9 +36,22 @@ const orderSchema = new mongoose.Schema(
             required: true,
             min: 0,
         },
-
+        tax: {
+            type: Number,
+            default: 0,
+            min: 0,
+        },
         // Delivery address snapshot
         deliveryAddress: [mongoose.Schema.Types.Mixed],
+
+        deliveryTime: {
+            type: Date,
+        },
+
+        riderInfo: {
+            type: mongoose.Schema.Types.Mixed, // { name, contact, vehicle }
+            default: null,
+        },
 
         // Payment
         paymentMethod: {

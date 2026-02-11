@@ -1,13 +1,22 @@
 const express = require("express");
 const router = express.Router();
 const User = require("../models/UserModel");
+const { Order } = require("../models/Order");
+const { Item } = require("../models/ItemModel");
 const authMiddleware = require("../middlewares/authMiddleware");
 
-const orderData = []
-router.get("/:orderId", (req, res) => {
-    const orderId = req.params.orderId;
-    const result = orderData.find(orders => orders.orderId == orderId)
-    res.send(result)
+router.get("/user", authMiddleware, async (req, res) => {
+    const userId = req.user._id;
+    if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+    }
+    try {
+        const orders = await Order.find({ userId })
+        res.status(200).json({ orders });
+    } catch (error) {
+        console.error("Error fetching user orders:", error);
+        res.status(500).json({ message: "Failed to fetch orders" });
+    }
 })
 
 // GET all orders
@@ -61,21 +70,40 @@ router.delete("/:orderId", authMiddleware, (req, res) => {
 
 router.post("/place", authMiddleware, async (req, res) => {
     try {
-        const userEmail = req.user.email; // Assuming auth middleware sets req.user
-        if (!userEmail) {
+        const userId = req.user._id; // Assuming auth middleware sets req.user
+        if (!userId) {
             return res.status(401).send("Unauthorized");
         }
-        const savedOrder = await User.findOneAndUpdate(
-            { email: userEmail },
-            { $push: { orders: req.body } }, // Push new order to user's orders array
-            { new: true } // Return the updated user document
-        );
 
-        if (!savedOrder) {
-            return res.status(500).send("Failed to save order");
+        const orderItems = req.body.orderItems;
+
+        for (const item of orderItems) {
+            console.log("Validating item:", item);
+            let itemPrice = item.isSale ? item.discountPrice : item.originalPrice;
+
+            const storedItem = await Item.findById(item._id);
+
+            if (!storedItem) {
+                return res.status(400).send({ message: `Item with ID ${item._id} not found` });
+            }
+
+            if (itemPrice !== storedItem.price) {
+                return res.status(400).send({ message: `Price mismatch for item ${item.name}` });
+            }
         }
 
-        res.status(200).send({ "message": "added", savedOrder });
+        // Create new order document
+        const newOrder = new Order({
+            ...req.body, // orderItems, pricing, deliveryAddress, payment details
+        });
+        const response = await newOrder.save();
+        if (!response) {
+            return res.status(500).send("Failed to save order");
+        }
+        else {
+            console.log("Order saved successfully:", response);
+            res.status(200).send({ "message": "Order placed successfully", order: response });
+        }
 
     } catch (error) {
         console.error("Error placing order:", error);

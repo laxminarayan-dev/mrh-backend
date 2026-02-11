@@ -160,6 +160,7 @@ app.use(express.json())
 
 // Orders Routes
 app.use("/api/orders", orderRoute);
+app.use("/api/items", require("./routes/items"))
 app.use("/api/transactions", transactionRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/user", require("./routes/user"))
