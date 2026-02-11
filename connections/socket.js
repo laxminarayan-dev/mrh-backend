@@ -20,13 +20,13 @@ const CreateSocket = (http) => {
         socket.on("join-user-room", (userId) => {
             socket.join(userId);
             socket.userId = userId; // optional tracking
-            console.log(`${socket.id} joined private room ${userId}`);
+            console.log("User joined private room:", userId);
         });
 
         socket.on("leave-user-room", () => {
             if (socket.userId) {
                 socket.leave(socket.userId);
-                console.log(`${socket.id} left private room ${socket.userId}`);
+                console.log("User left private room:", socket.userId);
                 socket.userId = null;
             }
         });
