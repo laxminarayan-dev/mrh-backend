@@ -5,7 +5,7 @@ const CreateSocket = (http) => {
         cors: {
             origin: [
                 "https://mrhalwai.in",
-                "https:www.mrhalwai.in",
+                "https://www.mrhalwai.in",
             ], // frontend URL
             methods: ["GET", "POST"]
         }
