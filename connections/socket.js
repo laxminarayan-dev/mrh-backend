@@ -2,7 +2,6 @@ const { Server } = require("socket.io");
 const users = new Map();
 const CreateSocket = (http) => {
     const io = new Server(http, {
-        // path: "/mrh-backend/socket.io",
         cors: {
             origin: [
                 "https://mrhalwai.in",
@@ -20,19 +19,19 @@ const CreateSocket = (http) => {
         socket.on("join-user-room", (userId) => {
             socket.join(userId);
             socket.userId = userId; // optional tracking
-            console.log("User joined private room:", userId);
+            console.log(`${socket.id} joined private room: ${userId}`);
         });
 
         socket.on("leave-user-room", () => {
             if (socket.userId) {
                 socket.leave(socket.userId);
-                console.log("User left private room:", socket.userId);
+                console.log(`${socket.id} left private room: ${socket.userId}`);
                 socket.userId = null;
             }
         });
 
         socket.on("disconnect", () => {
-            console.log("Socket disconnected:", socket.id);
+            console.log(`Socket disconnected: ${socket.id}`);
         });
 
     });
