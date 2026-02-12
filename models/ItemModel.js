@@ -11,14 +11,8 @@ const itemSchema = new mongoose.Schema({
     },
     description: {
         type: String,
-        required: [true, 'Description is required'],
         trim: true,
         maxlength: [500, 'Description cannot exceed 500 characters']
-    },
-    shortDescription: {
-        type: String,
-        trim: true,
-        maxlength: [150, 'Short description cannot exceed 150 characters']
     },
 
     // Category & Classification
@@ -28,15 +22,13 @@ const itemSchema = new mongoose.Schema({
         enum: ['dosa', 'uttapam', 'chinese', 'thali', 'pav-bhaji', 'sweets'],
         index: true
     },
-    subCategory: {
-        type: String,
-        default: ''
-    },
+
     cuisine: {
         type: String,
         enum: ['south-indian', 'chinese', 'north-indian'],
         default: 'south-indian'
     },
+
     includes: [String],
 
     // Pricing

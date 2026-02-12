@@ -7,6 +7,17 @@ const mongoose = require("mongoose");
 // Protect all routes below with auth middleware
 router.use(authMiddleware);
 
+// GET /api/user/cart - Get the authenticated user's cart
+router.get("/cart", async (req, res) => {
+    try {
+        const user = await User.findOne({ email: req.user.email });
+        return res.json({ success: true, cart: user.cart });
+    } catch (err) {
+        return res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /api/user/update/cart - Update the authenticated user's cart
 router.post("/update/cart", async (req, res) => {
     console.log("STEP 1: Route hit");
 
@@ -28,15 +39,7 @@ router.post("/update/cart", async (req, res) => {
     }
 });
 
-router.get("/cart", async (req, res) => {
-    try {
-        const user = await User.findOne({ email: req.user.email });
-        return res.json({ success: true, cart: user.cart });
-    } catch (err) {
-        return res.status(500).json({ error: err.message });
-    }
-});
-
+// POST /api/user/save-address - Save a new address for the authenticated user
 router.post("/save-address", async (req, res) => {
     try {
         const { coordinates, formattedAddress, isDefault } = req.body;

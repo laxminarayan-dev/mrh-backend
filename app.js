@@ -157,6 +157,7 @@ const tablesData = {
 }
 app.use(cors());
 app.use(express.json())
+app.use("/uploads", express.static("uploads"));
 
 // Orders Routes
 app.use("/api/orders", orderRoute);

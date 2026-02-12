@@ -5,13 +5,26 @@ const { Order } = require("../models/Order");
 const { Item } = require("../models/ItemModel");
 const authMiddleware = require("../middlewares/authMiddleware");
 
+
+// Return all orders (admin access)
+router.get("/", async (req, res) => {
+    try {
+        const orders = await Order.find();
+        res.status(200).json({ orders });
+    } catch (error) {
+        console.error("Error fetching orders:", error);
+        res.status(500).json({ message: "Failed to fetch orders" });
+    }
+})
+
+// Retrieve orders for the authenticated user
 router.get("/user", authMiddleware, async (req, res) => {
     const userId = req.user._id;
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
     }
     try {
-        const orders = await Order.find({ userId })
+        const orders = await Order.find({ userId });
         res.status(200).json({ orders });
     } catch (error) {
         console.error("Error fetching user orders:", error);
@@ -19,56 +32,11 @@ router.get("/user", authMiddleware, async (req, res) => {
     }
 })
 
-// GET all orders
-router.get("/", (req, res) => {
-    console.log("log check");
-    res.send(orderData);
-})
-
-// Add new order
-router.post("/add", (req, res) => {
-    console.log(req.body);
-    try {
-        orderData.push(req.body)
-        res.send({ "message": "added" })
-    } catch (error) {
-        res.sendStatus(500)
-    }
-})
-
-// PUT update order
-router.put("/update", (req, res) => {
-    const updatedOrder = req.body
-    const index = orderData.findIndex(order => order.orderId === req.body.orderId);
-
-    if (index !== -1) {
-        orderData[index] = { ...orderData[index], ...updatedOrder };
-        res.status(200).send(req.body)
-    } else {
-        res.status(500).send("Internal Server Error");
-    }
-})
-
-// DELETE order
-router.delete("/:orderId", authMiddleware, (req, res) => {
-    const orderId = req.params.orderId
-    try {
-        const index = orderData.findIndex(order => order.orderId === orderId);
-        if (index >= 0) {
-            orderData.splice(index, 1)
-            res.sendStatus(200)
-        }
-        else {
-            res.sendStatus(500)
-        }
-    }
-    catch (e) {
-        res.sendStatus(500)
-    }
-})
-
-
+// Place a new order
 router.post("/place", authMiddleware, async (req, res) => {
+    const session = await Item.startSession();
+    let savedOrder = null;
+
     try {
         const userId = req.user._id; // Assuming auth middleware sets req.user
         if (!userId) {
@@ -77,38 +45,87 @@ router.post("/place", authMiddleware, async (req, res) => {
 
         const orderItems = req.body.orderItems;
 
-        for (const item of orderItems) {
-            console.log("Validating item:", item);
-            let itemPrice = item.isSale ? item.discountPrice : item.originalPrice;
+        await session.withTransaction(async () => {
+            for (const item of orderItems) {
+                console.log("Validating item:", item);
+                let itemPrice = item.isSale ? item.discountPrice : item.originalPrice;
 
-            const storedItem = await Item.findById(item._id);
+                const storedItem = await Item.findById(item._id).session(session);
 
-            if (!storedItem) {
-                return res.status(400).send({ message: `Item with ID ${item._id} not found` });
+                if (!storedItem) {
+                    const notFoundError = new Error(`Item with ID ${item._id} not found`);
+                    notFoundError.status = 400;
+                    throw notFoundError;
+                }
+
+                if (itemPrice !== storedItem.price) {
+                    const priceError = new Error(`Price mismatch for item ${item.name}`);
+                    priceError.status = 400;
+                    throw priceError;
+                }
             }
 
-            if (itemPrice !== storedItem.price) {
-                return res.status(400).send({ message: `Price mismatch for item ${item.name}` });
+            // Create new order document
+            const newOrder = new Order({
+                ...req.body, // orderItems, pricing, deliveryAddress, payment details
+            });
+            savedOrder = await newOrder.save({ session });
+            if (!savedOrder) {
+                const saveError = new Error("Failed to save order");
+                saveError.status = 500;
+                throw saveError;
             }
-        }
 
-        // Create new order document
-        const newOrder = new Order({
-            ...req.body, // orderItems, pricing, deliveryAddress, payment details
+            const incrementOps = orderItems.map((item) =>
+                Item.updateOne(
+                    { _id: item._id },
+                    { $inc: { orderCount: 1 } },
+                    { session }
+                )
+            );
+            await Promise.all(incrementOps);
         });
-        const response = await newOrder.save();
-        if (!response) {
-            return res.status(500).send("Failed to save order");
-        }
-        else {
-            console.log("Order saved successfully:", response);
-            res.status(200).send({ "message": "Order placed successfully", order: response });
-        }
 
+        console.log("Order saved successfully:", savedOrder);
+        res.status(200).send({ message: "Order placed successfully", order: savedOrder });
     } catch (error) {
         console.error("Error placing order:", error);
-        res.status(500).send("Internal Server Error");
+        const statusCode = error.status || 500;
+        res.status(statusCode).send({ message: error.message || "Internal Server Error" });
+    } finally {
+        session.endSession();
     }
 })
+
+// PUT /api/orders/update/:id - Update an existing order
+router.put("/update/:id", async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const updatedOrder = await Order.findByIdAndUpdate(orderId, req.body, { new: true });
+        if (!updatedOrder) {
+            return res.status(404).send({ message: "Order not found" });
+        }
+        res.send({ message: "Order updated", order: updatedOrder });
+    } catch (error) {
+        console.error("Error updating order:", error);
+        res.status(500).send({ message: "Failed to update order" });
+    }
+})
+
+// DELETE /api/orders/delete/:id - Delete an order
+router.delete("/delete/:id", async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const deletedOrder = await Order.findByIdAndDelete(orderId);
+        if (!deletedOrder) {
+            return res.status(404).send({ message: "Order not found" });
+        }
+        res.send({ message: "Order deleted", order: deletedOrder });
+    } catch (error) {
+        console.error("Error deleting order:", error);
+        res.status(500).send({ message: "Failed to delete order" });
+    }
+})
+
 
 module.exports = router;
