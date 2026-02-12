@@ -34,9 +34,9 @@ router.post("/update", authMiddleware, async (req, res) => {
     }
 })
 
-
 // GET /api/shop/dashboard-data - Get dashboard data (KPIs, charts, tables)
 router.get("/dashboard-data", async (req, res) => {
+    console.log("Fetching dashboard data...");
     const totalSalesAgg = await Order.aggregate([
         { $group: { _id: null, total: { $sum: "$totalAmount" } } }
     ]);
