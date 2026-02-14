@@ -5,6 +5,7 @@ const { Order } = require("../models/Order");
 const User = require("../models/UserModel");
 const { Item } = require("../models/ItemModel");
 const authMiddleware = require("../middlewares/authMiddleware");
+const { set } = require("mongoose");
 
 // GET /api/shop - Get shop details
 router.get("/", async (req, res) => {
@@ -15,6 +16,21 @@ router.get("/", async (req, res) => {
         console.error("Error fetching shop details:", error);
         res.status(500).json({ message: "Failed to fetch shop details" });
     }
+})
+
+router.get("/:coordinates", async (req, res) => {
+    console.log("Fetching shop details for coordinates:", req.params.coordinates);
+    try {
+        const shop = await Shop.findOne({ coordinates: req.params.coordinates });
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+        res.status(200).json({ shop });
+    } catch (error) {
+        console.error("Error fetching shop details:", error);
+        res.status(500).json({ message: "Failed to fetch shop details" });
+    }
+
 })
 
 // POST /api/shop/update - Update shop details
