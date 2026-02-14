@@ -166,7 +166,7 @@ app.use("/api/transactions", transactionRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/shop", require("./routes/shop"))
 app.use("/api/user", require("./routes/user"))
-
+app.use("/api/geocode", require("./routes/geocode"))
 
 app.post("/api/dashboard-data", (req, res) => {
     res.send({
