@@ -50,7 +50,8 @@ router.post("/save-address", async (req, res) => {
             _id: new mongoose.Types.ObjectId(),
             coordinates,
             formattedAddress,
-            isDefault
+            isDefault,
+            saved: true
         };
         const user = await User.findOne({ email: req.user.email });
         if (isDefault) {

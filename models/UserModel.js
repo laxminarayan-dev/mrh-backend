@@ -1,29 +1,5 @@
 const mongoose = require('mongoose');
 const { orderSchema } = require('./Order');
-const addressSchema = new mongoose.Schema({
-    street: {
-        type: String,
-    },
-    apartment: {
-        type: String,
-    },
-    city: {
-        type: String,
-    },
-    state: {
-        type: String,
-    },
-    zipCode: {
-        type: String,
-    },
-    landmark: {
-        type: String,
-    },
-    isDefault: {
-        type: Boolean,
-        default: false
-    }
-}, { _id: true });
 
 const newAddressSchema = new mongoose.Schema({
     coordinates: [Number, Number], // [latitude, longitude]
@@ -33,6 +9,10 @@ const newAddressSchema = new mongoose.Schema({
     isDefault: {
         type: Boolean,
         default: false
+    },
+    saved: {
+        type: Boolean,
+        default: true
     }
 }, { _id: true });
 
