@@ -18,35 +18,62 @@ router.get("/", async (req, res) => {
     }
 })
 
-router.get("/:coordinates", async (req, res) => {
-    console.log("Fetching shop details for coordinates:", req.params.coordinates);
+// GET /api/shop/list - Get all shops (for multi-branch admin)
+router.get("/list", async (req, res) => {
     try {
-        const shop = await Shop.findOne({ coordinates: req.params.coordinates });
+        const shops = await Shop.find().sort({ createdAt: 1 });
+        res.status(200).json({ shops });
+    } catch (error) {
+        console.error("Error fetching shops list:", error);
+        res.status(500).json({ message: "Failed to fetch shops" });
+    }
+})
+
+// GET /api/shop/id/:shopId - Get a shop by id (avoids conflict with /:coordinates)
+router.get("/id/:shopId", async (req, res) => {
+    try {
+        const shop = await Shop.findById(req.params.shopId);
         if (!shop) {
             return res.status(404).json({ message: "Shop not found" });
         }
         res.status(200).json({ shop });
     } catch (error) {
-        console.error("Error fetching shop details:", error);
-        res.status(500).json({ message: "Failed to fetch shop details" });
+        console.error("Error fetching shop by id:", error);
+        res.status(500).json({ message: "Failed to fetch shop" });
     }
-
 })
 
-// POST /api/shop/update - Update shop details
-router.post("/update", authMiddleware, async (req, res) => {
+// POST /api/shop/clone - Clone an existing shop to create a new branch
+// Body: { sourceShopId, name?, code? }
+router.post("/clone", async (req, res) => {
     try {
-        const shop = await Shop.findOne();
-        if (!shop) {
-            return res.status(404).json({ message: "Shop not found" });
+        const { sourceShopId, name, code } = req.body || {};
+        if (!sourceShopId) {
+            return res.status(400).json({ message: "sourceShopId is required" });
         }
-        Object.assign(shop, req.body);
-        await shop.save();
-        res.status(200).json({ message: "Shop details updated", shop });
-    }
-    catch (error) {
-        console.error("Error updating shop details:", error);
-        res.status(500).json({ message: "Failed to update shop details" });
+
+        const source = await Shop.findById(sourceShopId);
+        if (!source) {
+            return res.status(404).json({ message: "Source shop not found" });
+        }
+
+        const sourceObj = source.toObject();
+        delete sourceObj._id;
+        delete sourceObj.createdAt;
+        delete sourceObj.updatedAt;
+        delete sourceObj.__v;
+
+        const newShop = new Shop({
+            ...sourceObj,
+            name: (name && String(name).trim()) || `${source.name || "Branch"} (New)`,
+            code: (code && String(code).trim()) || source.code || "BRANCH",
+        });
+
+        const saved = await newShop.save();
+        return res.status(201).json({ shop: saved });
+    } catch (error) {
+        console.error("Error cloning shop:", error);
+        res.status(500).json({ message: "Failed to create branch" });
     }
 })
 
@@ -82,17 +109,64 @@ router.get("/dashboard-data", async (req, res) => {
         { $sort: { totalSales: -1 } }
     ]);
 
-    res.json({
-        kpiData: {
-            totalSales,
-            totalOrders,
-            totalCustomers,
-            totalProducts,
+    const salesOflast7DaysAgg = await Order.aggregate([
+        { $match: { createdAt: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } } },
+        {
+            $group: {
+                _id: { $dateToString: { format: "%d/%m/%Y", date: "$createdAt" } },
+                totalSales: { $sum: "$totalAmount" }
+            }
         },
+        { $sort: { _id: 1 } }
+    ]);
+
+    res.json({
+        kpiData: [
+            { title: "Total Sales", counts: totalSales, subTitle: "All time", icon: "IndianRupee", color: "text-green-500" },
+            { title: "Total Orders", counts: totalOrders, subTitle: "All time", icon: "ShoppingCart", color: "text-blue-500" },
+            { title: "Total Customers", counts: totalCustomers, subTitle: "All time", icon: "Users", color: "text-orange-500" },
+            { title: "Total Products", counts: totalProducts, subTitle: "All time", icon: "ShoppingCart", color: "text-purple-500" }
+        ],
         chartData: {
-            salesByItems
+            salesByItems,
+            salesOverLast7Days: salesOflast7DaysAgg.map(sale => ({ date: sale._id, totalSales: sale.totalSales }))
         }
+
     });
 });
+
+router.get("/:coordinates", async (req, res) => {
+    console.log("Fetching shop details for coordinates:", req.params.coordinates);
+    try {
+        const shop = await Shop.findOne({ coordinates: req.params.coordinates });
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+        res.status(200).json({ shop });
+    } catch (error) {
+        console.error("Error fetching shop details:", error);
+        res.status(500).json({ message: "Failed to fetch shop details" });
+    }
+
+})
+
+// POST /api/shop/update - Update shop details
+router.post("/update", authMiddleware, async (req, res) => {
+    try {
+        const shop = await Shop.findOne();
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+        Object.assign(shop, req.body);
+        await shop.save();
+        res.status(200).json({ message: "Shop details updated", shop });
+    }
+    catch (error) {
+        console.error("Error updating shop details:", error);
+        res.status(500).json({ message: "Failed to update shop details" });
+    }
+})
+
+
 
 module.exports = router;

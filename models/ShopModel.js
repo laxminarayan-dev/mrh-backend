@@ -1,6 +1,16 @@
 const mongoose = require("mongoose");
 
 const shopSchema = new mongoose.Schema({
+    name: {
+        type: String,
+        default: "Main Branch",
+        trim: true
+    },
+    code: {
+        type: String,
+        default: "MAIN",
+        trim: true
+    },
     shopOpen: {
         type: Boolean,
         default: true
