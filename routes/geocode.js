@@ -19,7 +19,7 @@ router.get("/reverse-geocode", async (req, res) => {
         console.log(data)
         res.json(data);
     } catch (err) {
-        console.error(err)
+        console.error("Error fetching address:", err)
         res.status(500).json({ error: "Failed to fetch address" });
     }
 });

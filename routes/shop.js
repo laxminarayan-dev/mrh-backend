@@ -10,24 +10,27 @@ const { set } = require("mongoose");
 // GET /api/shop - Get shop details
 router.get("/", async (req, res) => {
     try {
-        const shop = await Shop.findOne();
+        console.log("Fetching shop details...");
+        const shop = await Shop.find();
         res.status(200).json({ shop });
     } catch (error) {
-        console.error("Error fetching shop details:", error);
+        console.log("Error fetching shop details:", error);
         res.status(500).json({ message: "Failed to fetch shop details" });
     }
 })
 
-// GET /api/shop/list - Get all shops (for multi-branch admin)
-router.get("/list", async (req, res) => {
+router.post("/add", async (req, res) => {
     try {
-        const shops = await Shop.find().sort({ createdAt: 1 });
-        res.status(200).json({ shops });
+        const newShop = new Shop(req.body);
+        const saved = await newShop.save();
+        res.status(201).json({ shop: saved });
     } catch (error) {
-        console.error("Error fetching shops list:", error);
-        res.status(500).json({ message: "Failed to fetch shops" });
+        console.error("Error adding shop:", error);
+        res.status(500).json({ message: "Failed to add shop" });
     }
 })
+
+
 
 // GET /api/shop/id/:shopId - Get a shop by id (avoids conflict with /:coordinates)
 router.get("/id/:shopId", async (req, res) => {

@@ -17,25 +17,41 @@ const shopSchema = new mongoose.Schema({
     },
     shopDeliveryRange: {
         type: Number,
-        default: 5 // Default delivery range in kilometers
+        default: 5
     },
+
+    menuItems: [mongoose.Schema.Types.ObjectId],
+
     shopLocation: {
-        formattedAddress: { type: String, required: true },
+        type: {
+            type: String,
+            enum: ["Point"],
+            default: "Point",
+            required: true
+        },
         coordinates: {
             type: [Number], // [longitude, latitude]
-            required: true,
-            index: "2dsphere" // Geospatial index for location queries
+            required: true
+        },
+        formattedAddress: {
+            type: String,
+            required: true
         }
     },
+
     shopContact: {
-        phone: { type: String, required: true },
-        email: { type: String, required: true }
+        phone: String,
+        email: String
     },
+
     shopHours: {
-        open: { type: String, required: true }, // e.g., "09:00"
-        close: { type: String, required: true } // e.g., "21:00"
-    },
+        open: String,
+        close: String
+    }
+
 }, { timestamps: true });
+
+shopSchema.index({ shopLocation: "2dsphere" });
 
 const Shop = mongoose.model("Shop", shopSchema);
 
