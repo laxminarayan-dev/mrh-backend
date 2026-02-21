@@ -7,6 +7,8 @@ const CreateSocket = (http) => {
             origin: [
                 "https://mrhalwai.in",
                 "https://www.mrhalwai.in",
+                "https://admin.mrhalwai.in",
+                "https://www.admin.mrhalwai.in",
                 "http://localhost:3000",
                 "http://localhost:8000",
                 "http://localhost:5173"
