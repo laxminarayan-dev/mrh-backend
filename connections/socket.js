@@ -1,11 +1,16 @@
 const { Server } = require("socket.io");
 const users = new Map();
+let io = null;
 const CreateSocket = (http) => {
-    const io = new Server(http, {
+    io = new Server(http, {
         cors: {
             origin: [
                 "https://mrhalwai.in",
-                "https://www.mrhalwai.in"
+                "https://www.mrhalwai.in",
+                "http://localhost:3000",
+                "http://localhost:8000",
+                "http://localhost:5173"
+
             ],
             methods: ["GET", "POST"],
             credentials: true
@@ -38,4 +43,6 @@ const CreateSocket = (http) => {
 
 }
 
-module.exports = CreateSocket;
+const getIO = () => io;
+
+module.exports = { CreateSocket, getIO };

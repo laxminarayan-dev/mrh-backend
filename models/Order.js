@@ -15,6 +15,12 @@ const orderSchema = new mongoose.Schema(
             type: [mongoose.Schema.Types.Mixed], // array of orderItemSchema snapshots
         },
 
+        shopId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Shop",
+            required: true,
+        },
+
         // Pricing
         subtotal: {
             type: Number,

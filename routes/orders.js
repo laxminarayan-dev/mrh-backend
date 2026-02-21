@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/UserModel");
 const { Order } = require("../models/Order");
 const { Item } = require("../models/ItemModel");
+const { getIO } = require("../connections/socket");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 
@@ -87,6 +88,12 @@ router.post("/place", authMiddleware, async (req, res) => {
         });
 
         console.log("Order saved successfully:", savedOrder);
+        const io = getIO();
+        if (io) {
+            io.emit("new-order", savedOrder);
+        } else {
+            console.warn("Socket IO not initialized yet — cannot emit 'new-order'");
+        }
         res.status(200).send({ message: "Order placed successfully", order: savedOrder });
     } catch (error) {
         console.error("Error placing order:", error);

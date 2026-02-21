@@ -4,8 +4,7 @@ const { Shop } = require("../models/ShopModel");
 const { Order } = require("../models/Order");
 const User = require("../models/UserModel");
 const { Item } = require("../models/ItemModel");
-const authMiddleware = require("../middlewares/authMiddleware");
-const { set } = require("mongoose");
+const { getIO } = require("../connections/socket");
 
 // GET /api/shop - Get shop details
 router.get("/", async (req, res) => {
@@ -154,15 +153,21 @@ router.get("/:coordinates", async (req, res) => {
 })
 
 // POST /api/shop/update - Update shop details
-router.post("/update", authMiddleware, async (req, res) => {
+router.post("/update/:id", async (req, res) => {
     try {
-        const shop = await Shop.findOne();
+        const shop = await Shop.findByIdAndUpdate(req.params.id, req.body, { new: true });
         if (!shop) {
             return res.status(404).json({ message: "Shop not found" });
         }
-        Object.assign(shop, req.body);
-        await shop.save();
+        const io = getIO();
+        if (io) {
+            io.emit("shop-updated", shop);
+        } else {
+            console.warn("Socket IO not initialized yet — cannot emit 'shop-updated'");
+        }
         res.status(200).json({ message: "Shop details updated", shop });
+
+
     }
     catch (error) {
         console.error("Error updating shop details:", error);

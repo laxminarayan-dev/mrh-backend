@@ -7,7 +7,7 @@ const orderRoute = require("./routes/orders")
 const transactionRoute = require("./routes/transactions")
 const authRoute = require("./routes/auth")
 const { connectDB } = require("./connections/db");
-const CreateSocket = require("./connections/socket");
+const { CreateSocket } = require("./connections/socket");
 const app = express();
 const server = http.createServer(app);
 CreateSocket(server);
