@@ -87,7 +87,6 @@ router.post("/place", authMiddleware, async (req, res) => {
             await Promise.all(incrementOps);
         });
 
-        console.log("Order saved successfully:", savedOrder);
         const io = getIO();
         if (io) {
             io.emit("new-order", savedOrder);
@@ -115,6 +114,7 @@ router.put("/update/:id", async (req, res) => {
         const io = getIO();
         if (io) {
             io.to(updatedOrder.userId.toString()).emit("order-updated", updatedOrder);
+            io.emit("admin-order-updated", updatedOrder);
         } else {
             console.warn("Socket IO not initialized yet — cannot emit 'order-updated'");
         }
