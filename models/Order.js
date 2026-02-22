@@ -86,6 +86,23 @@ const orderSchema = new mongoose.Schema(
             index: true,
         },
 
+        // Review
+        review: {
+            rating: {
+                type: Number,
+                min: 1,
+                max: 5,
+            },
+            comment: {
+                type: String,
+                maxlength: 300,
+            },
+            submitted: {
+                type: Boolean,
+                default: false,
+            },
+        },
+
         // Extra info
         notes: {
             type: String,

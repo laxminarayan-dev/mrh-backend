@@ -140,5 +140,26 @@ router.delete("/delete/:id", async (req, res) => {
     }
 })
 
+router.put("/review/:id", authMiddleware, async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const review = req.body;
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            { review: { ...review, submitted: true } },
+            { new: true }
+        );
+        if (!updatedOrder) {
+            return res.status(404).send({ message: "Order not found" });
+        }
+        res.send({ message: "Review submitted", order: updatedOrder });
+
+    } catch (error) {
+        console.error("Error submitting review:", error);
+        res.status(500).send({ message: "Failed to submit review" });
+    }
+})
+
+
 
 module.exports = router;
