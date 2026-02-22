@@ -112,6 +112,12 @@ router.put("/update/:id", async (req, res) => {
         if (!updatedOrder) {
             return res.status(404).send({ message: "Order not found" });
         }
+        const io = getIO();
+        if (io) {
+            io.to(updatedOrder.userId.toString()).emit("order-updated", updatedOrder);
+        } else {
+            console.warn("Socket IO not initialized yet — cannot emit 'order-updated'");
+        }
         res.send({ message: "Order updated", order: updatedOrder });
     } catch (error) {
         console.error("Error updating order:", error);
