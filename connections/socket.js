@@ -45,6 +45,11 @@ const CreateSocket = (http) => {
 
 }
 
-const getIO = () => io;
+const getIO = () => {
+    if (!io) {
+        console.log("❌ Socket.io not initialized");
+    }
+    return io;
+};
 
 module.exports = { CreateSocket, getIO };

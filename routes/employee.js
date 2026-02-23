@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Employee = require('../models/EmpModel');
+const { getIO } = require("../connections/socket");
 
 // Get all employees    
 router.get('/', async (req, res) => {
@@ -24,6 +25,13 @@ router.post('/', async (req, res) => {
         const employee = new Employee(req.body);
         const newEmployee = await employee.save();
         console.log('Employee created:', newEmployee);
+        const io = getIO();
+        if (io) {
+            io.emit('admin-empupdate', newEmployee);
+        }
+        else {
+            console.warn('Socket.io instance not found. Real-time updates will not be sent.');
+        }
         res.status(201).json(newEmployee);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -35,6 +43,14 @@ router.put('/:id', getEmployee, async (req, res) => {
     Object.assign(res.employee, req.body);
     try {
         const updatedEmployee = await res.employee.save();
+        const io = getIO();
+        if (io) {
+            console.log('Employee updated socket:', updatedEmployee);
+            io.emit('admin-empupdate', updatedEmployee);
+        }
+        else {
+            console.warn('Socket.io instance not found. Real-time updates will not be sent.');
+        }
         res.json(updatedEmployee);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -45,6 +61,12 @@ router.put('/:id', getEmployee, async (req, res) => {
 router.delete('/:id', getEmployee, async (req, res) => {
     try {
         await res.employee.deleteOne();
+        const io = getIO();
+        if (io) {
+            io.emit('admin-empupdate', res.employee._id);
+        } else {
+            console.warn('Socket.io instance not found. Real-time updates will not be sent.');
+        }
         res.json({ message: 'Deleted Employee' });
     } catch (err) {
         res.status(500).json({ message: err.message });
