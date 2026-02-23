@@ -19,9 +19,11 @@ router.get('/:id', getEmployee, (req, res) => {
 
 // Create an employee
 router.post('/', async (req, res) => {
-    const employee = new Employee(req.body);
+    console.log('Received employee data:', req.body);
     try {
+        const employee = new Employee(req.body);
         const newEmployee = await employee.save();
+        console.log('Employee created:', newEmployee);
         res.status(201).json(newEmployee);
     } catch (err) {
         res.status(400).json({ message: err.message });
@@ -29,7 +31,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update an employee
-router.patch('/:id', getEmployee, async (req, res) => {
+router.put('/:id', getEmployee, async (req, res) => {
     Object.assign(res.employee, req.body);
     try {
         const updatedEmployee = await res.employee.save();
@@ -42,7 +44,7 @@ router.patch('/:id', getEmployee, async (req, res) => {
 // Delete an employee
 router.delete('/:id', getEmployee, async (req, res) => {
     try {
-        await res.employee.remove();
+        await res.employee.deleteOne();
         res.json({ message: 'Deleted Employee' });
     } catch (err) {
         res.status(500).json({ message: err.message });

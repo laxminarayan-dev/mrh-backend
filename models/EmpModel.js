@@ -11,7 +11,6 @@ const EmpSchema = new mongoose.Schema({
     panNo: { type: String, required: true },
     dateOfJoining: { type: Date, required: true },
     salary: { type: Number, required: true },
-    department: { type: String, required: true },
     emergencyContact: { type: String, required: true },
     password: { type: String, required: true },
     role: { type: String, default: "employee" }
