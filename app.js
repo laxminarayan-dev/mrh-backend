@@ -34,6 +34,7 @@ app.use("/api/transactions", transactionRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/shop", require("./routes/shop"))
 app.use("/api/user", require("./routes/user"))
+app.use("/api/employee", require("./routes/employee"))
 app.use("/api/geocode", require("./routes/geocode"))
 
 app.get("/", (req, res) => {
