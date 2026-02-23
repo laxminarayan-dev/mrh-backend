@@ -63,3 +63,5 @@ async function getEmployee(req, res, next) {
     res.employee = employee;
     next();
 }
+
+module.exports = router;
