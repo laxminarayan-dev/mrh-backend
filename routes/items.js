@@ -63,55 +63,96 @@ router.get("/:id", async (req, res) => {
 // POST /api/items/add - Add a new item (with image upload)
 router.post("/add", upload.single("image"), async (req, res) => {
     console.log("Received item data:", req.body);
+
     try {
+
         if (!req.file) {
             return res.status(400).send({ message: "Image is required" });
         }
+
+        // ✅ FIX: Parse JSON fields
+        const parseJSONFields = ["includes", "timings", "days"];
+
+        parseJSONFields.forEach(field => {
+            if (req.body[field]) {
+                try {
+                    req.body[field] = JSON.parse(req.body[field]);
+                } catch {
+                    req.body[field] = [];
+                }
+            }
+        });
 
         const newItem = new Item({
             ...req.body,
             images: {
                 url: `/uploads/images/${req.file.filename}`,
-                alt: req.body?.images?.alt || req.body?.imageAlt || "",
+                alt: req.body?.imageAlt || "",
             },
         });
-        const io = getIO();
-        if (io) {
-            io.emit("item-updated", newItem);
-        }
+
         const savedItem = await newItem.save();
+
+        const io = getIO();
+        if (io) io.emit("item-updated", savedItem);
+
         res.status(201).send({ message: "Item added", item: savedItem });
+
     } catch (error) {
         console.error("Error adding item:", error);
         res.status(500).send({ message: "Failed to add item" });
     }
-})
+});
+
 
 // PUT /api/items/update/:id - Update an existing item (with optional image upload)
 router.put("/update/:id", upload.single("image"), async (req, res) => {
     try {
+
         const itemId = req.params.id;
+
+        // ✅ FIX: Parse JSON fields
+        const parseJSONFields = ["includes", "timings", "days"];
+
+        parseJSONFields.forEach(field => {
+            if (req.body[field]) {
+                try {
+                    req.body[field] = JSON.parse(req.body[field]);
+                } catch {
+                    req.body[field] = [];
+                }
+            }
+        });
+
         const updateData = { ...req.body };
+
         if (req.file) {
             updateData.images = {
                 url: `/uploads/images/${req.file.filename}`,
-                alt: req.body?.images?.alt || req.body?.imageAlt || "",
+                alt: req.body?.imageAlt || "",
             };
         }
-        const updatedItem = await Item.findByIdAndUpdate(itemId, updateData, { new: true });
+
+        const updatedItem = await Item.findByIdAndUpdate(
+            itemId,
+            updateData,
+            { new: true }
+        );
+
         if (!updatedItem) {
             return res.status(404).send({ message: "Item not found" });
         }
+
         const io = getIO();
-        if (io) {
-            io.emit("item-updated", updatedItem);
-        }
+        if (io) io.emit("item-updated", updatedItem);
+
         res.send({ message: "Item updated", item: updatedItem });
+
     } catch (error) {
         console.error("Error updating item:", error);
         res.status(500).send({ message: "Failed to update item" });
     }
-})
+});
 
 // DELETE /api/items/delete/:id - Delete an item
 router.delete("/delete/:id", async (req, res) => {
