@@ -18,6 +18,17 @@ router.get('/:id', getEmployee, (req, res) => {
     res.json(res.employee);
 });
 
+// Get employees by role
+router.get('/role/:role', async (req, res) => {
+    try {
+        const employees = await Employee.find({ role: req.params.role });
+        res.json(employees);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+
 // Create an employee
 router.post('/', async (req, res) => {
     console.log('Received employee data:', req.body);
