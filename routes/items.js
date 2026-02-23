@@ -5,6 +5,7 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 const { getIO } = require('../connections/socket');
+const { Shop } = require("../models/ShopModel");
 
 const uploadsDir = path.join(__dirname, "..", "uploads", "images");
 if (!fs.existsSync(uploadsDir)) {
@@ -120,9 +121,13 @@ router.delete("/delete/:id", async (req, res) => {
         if (!deletedItem) {
             return res.status(404).send({ message: "Item not found" });
         }
+        await Shop.updateMany(
+            { menuItems: deletedItem._id },
+            { $pull: { menuItems: deletedItem._id } }
+        );
         const io = getIO()
         if (io) {
-            io.emit("item-deleted", itemId);
+            io.emit("item-deleted");
         }
         res.send({ message: "Item deleted", item: deletedItem });
     } catch (error) {
