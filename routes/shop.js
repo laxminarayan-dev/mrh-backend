@@ -18,19 +18,6 @@ router.get("/", async (req, res) => {
     }
 })
 
-router.post("/add", async (req, res) => {
-    try {
-        const newShop = new Shop(req.body);
-        const saved = await newShop.save();
-        res.status(201).json({ shop: saved });
-    } catch (error) {
-        console.error("Error adding shop:", error);
-        res.status(500).json({ message: "Failed to add shop" });
-    }
-})
-
-
-
 // GET /api/shop/id/:shopId - Get a shop by id (avoids conflict with /:coordinates)
 router.get("/id/:shopId", async (req, res) => {
     try {
@@ -45,37 +32,19 @@ router.get("/id/:shopId", async (req, res) => {
     }
 })
 
-// POST /api/shop/clone - Clone an existing shop to create a new branch
-// Body: { sourceShopId, name?, code? }
-router.post("/clone", async (req, res) => {
+router.post("/add", async (req, res) => {
     try {
-        const { sourceShopId, name, code } = req.body || {};
-        if (!sourceShopId) {
-            return res.status(400).json({ message: "sourceShopId is required" });
-        }
-
-        const source = await Shop.findById(sourceShopId);
-        if (!source) {
-            return res.status(404).json({ message: "Source shop not found" });
-        }
-
-        const sourceObj = source.toObject();
-        delete sourceObj._id;
-        delete sourceObj.createdAt;
-        delete sourceObj.updatedAt;
-        delete sourceObj.__v;
-
-        const newShop = new Shop({
-            ...sourceObj,
-            name: (name && String(name).trim()) || `${source.name || "Branch"} (New)`,
-            code: (code && String(code).trim()) || source.code || "BRANCH",
-        });
-
+        const newShop = new Shop(req.body);
         const saved = await newShop.save();
-        return res.status(201).json({ shop: saved });
+        if (!saved) {
+            return res.status(500).json({ message: "Failed to add shop" });
+        }
+        const io = getIO();
+        io.emit("shop-updated");
+        res.status(201).json({ shop: saved });
     } catch (error) {
-        console.error("Error cloning shop:", error);
-        res.status(500).json({ message: "Failed to create branch" });
+        console.error("Error adding shop:", error);
+        res.status(500).json({ message: "Failed to add shop" });
     }
 })
 

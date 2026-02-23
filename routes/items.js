@@ -4,6 +4,7 @@ const { Item } = require("../models/ItemModel");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { getIO } = require('../connections/socket');
 
 const uploadsDir = path.join(__dirname, "..", "uploads", "images");
 if (!fs.existsSync(uploadsDir)) {
@@ -73,7 +74,10 @@ router.post("/add", upload.single("image"), async (req, res) => {
                 alt: req.body?.images?.alt || req.body?.imageAlt || "",
             },
         });
-
+        const io = getIO();
+        if (io) {
+            io.emit("item-updated", newItem);
+        }
         const savedItem = await newItem.save();
         res.status(201).send({ message: "Item added", item: savedItem });
     } catch (error) {
@@ -97,6 +101,10 @@ router.put("/update/:id", upload.single("image"), async (req, res) => {
         if (!updatedItem) {
             return res.status(404).send({ message: "Item not found" });
         }
+        const io = getIO();
+        if (io) {
+            io.emit("item-updated", updatedItem);
+        }
         res.send({ message: "Item updated", item: updatedItem });
     } catch (error) {
         console.error("Error updating item:", error);
@@ -111,6 +119,10 @@ router.delete("/delete/:id", async (req, res) => {
         const deletedItem = await Item.findByIdAndDelete(itemId);
         if (!deletedItem) {
             return res.status(404).send({ message: "Item not found" });
+        }
+        const io = getIO()
+        if (io) {
+            io.emit("item-deleted", itemId);
         }
         res.send({ message: "Item deleted", item: deletedItem });
     } catch (error) {
