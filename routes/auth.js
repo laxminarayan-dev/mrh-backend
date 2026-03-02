@@ -39,7 +39,7 @@ const getTransporter = async () => {
 
 
 
-const generateToken = (user) => {
+export const generateToken = (user) => {
     const JWT_KEY = process.env.JWT_SECRET_KEY;
     if (!JWT_KEY) {
         return null;
