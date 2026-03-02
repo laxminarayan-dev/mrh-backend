@@ -85,6 +85,10 @@ const orderSchema = new mongoose.Schema(
             default: "placed",
             index: true,
         },
+        assignedAt: {
+            type: Date,
+            default: null,
+        },
 
         // Review
         review: {

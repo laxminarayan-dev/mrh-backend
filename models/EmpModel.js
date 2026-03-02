@@ -13,7 +13,8 @@ const EmpSchema = new mongoose.Schema({
     salary: { type: Number, required: true },
     emergencyContact: { type: String, required: true },
     password: { type: String, required: true },
-    role: { type: String, default: "employee" }
+    role: { type: String, default: "employee" },
+    isActive: { type: Boolean, default: false },
 
 })
 const Employee = mongoose.model('Emp', EmpSchema, 'employees');

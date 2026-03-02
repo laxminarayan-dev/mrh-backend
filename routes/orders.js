@@ -107,12 +107,18 @@ router.post("/place", authMiddleware, async (req, res) => {
 router.put("/update/:id", async (req, res) => {
     try {
         const orderId = req.params.id;
+        console.log("Updating order with ID:", orderId, "and body:", req.body);
         const updatedOrder = await Order.findByIdAndUpdate(orderId, req.body, { new: true });
         if (!updatedOrder) {
             return res.status(404).send({ message: "Order not found" });
         }
         const io = getIO();
+
+
         if (io) {
+            if (updatedOrder.status === "assigned") {
+                io.to(updatedOrder.riderInfo._id.toString()).emit("order-assigned", updatedOrder);
+            }
             io.to(updatedOrder.userId.toString()).emit("order-updated", updatedOrder);
             io.emit("admin-order-updated", updatedOrder);
         } else {

@@ -21,12 +21,16 @@ const CreateSocket = (http) => {
 
     io.on("connection", (socket) => {
 
-        console.log("Socket connected:", socket.id);
-
         socket.on("join-user-room", (userId) => {
             socket.join(userId);
             socket.userId = userId; // optional tracking
             console.log(`${socket.id} joined private room: ${userId}`);
+        });
+
+        socket.on("join:rider", (riderId) => {
+            socket.join(riderId);
+            socket.riderId = riderId;
+            console.log(`${socket.id} joined private room: ${riderId}`);
         });
 
         socket.on("leave-user-room", () => {

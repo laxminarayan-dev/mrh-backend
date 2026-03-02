@@ -25,10 +25,10 @@ app.use(
     "/uploads/images",
     express.static(path.join(__dirname, "uploads", "images"))
 );
-console.log("Static path:", path.join(__dirname, "uploads", "images"));
 
 // Orders Routes
 app.use("/api/orders", orderRoute);
+app.use("/api/rider", require("./routes/rider"))
 app.use("/api/items", require("./routes/items"))
 app.use("/api/transactions", transactionRoute);
 app.use("/api/auth", authRoute);
