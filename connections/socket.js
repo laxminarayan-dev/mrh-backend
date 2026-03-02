@@ -41,8 +41,19 @@ const CreateSocket = (http) => {
             }
         });
 
-        socket.on("disconnect", () => {
-            console.log(`Socket disconnected: ${socket.id}`);
+        socket.on("disconnect", async () => {
+            console.log(`Socket disconnected: ${socket.id}  - Rider: ${socket.riderId}`);
+            if (socket.riderId) {
+                try {
+                    await Rider.findByIdAndUpdate(socket.riderId, {
+                        isActive: false
+                    });
+
+                    console.log(`Rider ${socket.riderId} marked offline`);
+                } catch (err) {
+                    console.error("Error updating rider status:", err);
+                }
+            }
         });
 
     });
