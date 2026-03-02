@@ -43,7 +43,6 @@ const CreateSocket = (http) => {
         });
 
         socket.on("disconnect", async () => {
-            console.log(`Socket disconnected: ${socket.id}  - Rider: ${socket.riderId}`);
             if (socket.riderId) {
                 try {
                     await Employee.findByIdAndUpdate(socket.riderId, {
