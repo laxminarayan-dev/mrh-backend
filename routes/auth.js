@@ -39,7 +39,7 @@ const getTransporter = async () => {
 
 
 
-export const generateToken = (user) => {
+const generateToken = (user) => {
     const JWT_KEY = process.env.JWT_SECRET_KEY;
     if (!JWT_KEY) {
         return null;
@@ -435,4 +435,5 @@ router.post("/forgot-password/reset", async (req, res) => {
 
 
 module.exports = router;
+module.exports.generateToken = generateToken;
 
