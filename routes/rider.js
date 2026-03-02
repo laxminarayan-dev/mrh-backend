@@ -25,6 +25,19 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// 
+router.get('/profile/:id', async (req, res) => {
+    try {
+        const employee = await Employee.findById(req.params.id);
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+        res.json(employee);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Get all orders for the rider
 router.get('/orders/:riderId', async (req, res) => {
     try {
