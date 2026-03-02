@@ -3,7 +3,7 @@ const router = express.Router();
 const { Order } = require('../models/Order');
 const Employee = require('../models/EmpModel');
 const { getIO } = require("../connections/socket");
-import { generateToken } from './auth';
+const { generateToken } = require('./auth');
 
 
 // login
