@@ -28,7 +28,7 @@ router.post('/login', async (req, res) => {
 // 
 router.get('/profile/:id', async (req, res) => {
     try {
-        const employee = await Employee.findById(req.params.id);
+        const employee = await Employee.findById(req.params.id).select('-password'); // Exclude password from the response
         if (!employee) {
             return res.status(404).json({ message: 'Employee not found' });
         }
