@@ -49,7 +49,7 @@ const CreateSocket = (http) => {
                     await Employee.findByIdAndUpdate(socket.riderId, {
                         isActive: false
                     });
-
+                    io.emit('admin-empupdate');
                     console.log(`Rider ${socket.riderId} marked offline`);
                 } catch (err) {
                     console.error("Error updating rider status:", err);
