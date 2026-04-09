@@ -435,4 +435,5 @@ router.post("/forgot-password/reset", async (req, res) => {
 
 
 module.exports = router;
+module.exports.generateToken = generateToken;
 
