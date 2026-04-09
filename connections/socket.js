@@ -1,5 +1,6 @@
 const { Server } = require("socket.io");
 const users = new Map();
+const Employee = require('../models/EmpModel');
 let io = null;
 const CreateSocket = (http) => {
     io = new Server(http, {
@@ -41,8 +42,18 @@ const CreateSocket = (http) => {
             }
         });
 
-        socket.on("disconnect", () => {
-            console.log(`Socket disconnected: ${socket.id}`);
+        socket.on("disconnect", async () => {
+            if (socket.riderId) {
+                try {
+                    await Employee.findByIdAndUpdate(socket.riderId, {
+                        isActive: false
+                    });
+                    io.emit('admin-empupdate');
+                    console.log(`Rider ${socket.riderId} marked offline`);
+                } catch (err) {
+                    console.error("Error updating rider status:", err);
+                }
+            }
         });
 
     });

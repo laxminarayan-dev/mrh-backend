@@ -3,9 +3,40 @@ const router = express.Router();
 const { Order } = require('../models/Order');
 const Employee = require('../models/EmpModel');
 const { getIO } = require("../connections/socket");
-// const authMiddleware = require('../middleware/authMiddleware');
+const { generateToken } = require('./auth');
 
 
+// login
+router.post('/login', async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const employee = await Employee.findOne({ email });
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+        const isMatch = employee.password === password; // In production, use bcrypt to compare hashed passwords
+        if (!isMatch) {
+            return res.status(400).json({ message: 'Invalid credentials' });
+        }
+        const token = generateToken(employee);
+        res.json({ message: 'Login successful', employee, token });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// 
+router.get('/profile/:id', async (req, res) => {
+    try {
+        const employee = await Employee.findById(req.params.id).select('-password'); // Exclude password from the response
+        if (!employee) {
+            return res.status(404).json({ message: 'Employee not found' });
+        }
+        res.json(employee);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
 // Get all orders for the rider
 router.get('/orders/:riderId', async (req, res) => {
