@@ -41,7 +41,7 @@ router.post("/add", async (req, res) => {
         }
         const io = getIO();
         io.emit("shop-updated");
-        io.emit("shop-added")
+        io.emit("shop-added", saved)
         res.status(201).json({ shop: saved });
     } catch (error) {
         console.error("Error adding shop:", error);
