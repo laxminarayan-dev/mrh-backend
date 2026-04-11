@@ -144,6 +144,27 @@ router.post("/update/:id", async (req, res) => {
     }
 })
 
+router.delete('/delete/:id', async (req, res) => {
+    try {
+        const shop = await Shop.findByIdAndDelete(req.params.id)
+        if (!shop) {
+            return res.status(404).json({ message: "Shop not found" });
+        }
+        const io = getIO();
+        if (io) {
+            io.emit("shop-deleted", shop);
+        } else {
+            console.warn("Socket IO not initialized yet — cannot emit 'shop-updated'");
+        }
+        res.status(200).json({ message: "Shop Deleted", shop });
+
+
+    }
+    catch (error) {
+        console.error("Error deleting shop:", error);
+        res.status(500).json({ message: "Failed to delete shop" });
+    }
+})
 
 
 module.exports = router;
