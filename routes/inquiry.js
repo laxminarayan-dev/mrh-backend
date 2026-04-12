@@ -15,8 +15,10 @@ const adminMiddleware = (req, res, next) => {
 
 // POST /api/inquiry/submit - User submits an inquiry
 router.post("/submit", authMiddleware, async (req, res, next) => {
+    console.log("this ---------------- ", req.user)
     try {
         const { fullName, email, inquiry, category } = req.body;
+
 
         // Debug: Check if req.user exists
         if (!req.user) {
@@ -45,7 +47,7 @@ router.post("/submit", authMiddleware, async (req, res, next) => {
 
         // Create new inquiry
         const newInquiry = new Inquiry({
-            userId: req.user._id,
+            userId: req.user?._id,
             fullName: fullName.trim(),
             email: email.toLowerCase().trim(),
             inquiry: inquiry.trim(),

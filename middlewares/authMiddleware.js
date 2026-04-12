@@ -17,7 +17,7 @@ const authMiddleware = (req, res, next) => {
         // 4️⃣ Attach user info to request
         req.user = decoded; // { _id, id, email, role, ... }
 
-        console.log("✅ Token decoded. User:", { _id: req.user._id, email: req.user.email, role: req.user.role });
+        // console.log("✅ Token decoded. User:", { _id: req.user._id, email: req.user.email, role: req.user.role });
 
         next();
     } catch (error) {

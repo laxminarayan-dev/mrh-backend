@@ -80,23 +80,8 @@ const inquirySchema = new mongoose.Schema({
         },
         default: 'other'
     },
-
-    // Timestamps
-    createdAt: {
-        type: Date,
-        default: Date.now
-    },
-
-    updatedAt: {
-        type: Date,
-        default: Date.now
-    }
-});
-
-// Update the updatedAt timestamp before saving
-inquirySchema.pre('save', function (next) {
-    this.updatedAt = Date.now();
-    next();
+}, {
+    timestamps: true  // Mongoose will auto-manage createdAt and updatedAt
 });
 
 // Index for faster queries
