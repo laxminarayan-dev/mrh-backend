@@ -82,8 +82,7 @@ router.post("/submit", authMiddleware, async (req, res, next) => {
 router.get("/my-inquiries", authMiddleware, async (req, res, next) => {
     try {
         const inquiries = await Inquiry.find({ userId: req.user._id })
-            .sort({ createdAt: -1 })
-            .select("-adminResponse -respondedBy");
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
             message: "Inquiries fetched",
