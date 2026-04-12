@@ -1,15 +1,35 @@
 const express = require("express");
 const router = express.Router();
+const jwt = require("jsonwebtoken");
 const Inquiry = require("../models/Inquiry");
 const authMiddleware = require("../middlewares/authMiddleware");
 const { getIO } = require("../connections/socket");
 
-// Middleware to check if user is admin
+// Middleware to check if user is admin - includes auth verification
 const adminMiddleware = (req, res, next) => {
-    if (!req.user || req.user.role !== "admin") {
-        return res.status(403).json({ message: "Access denied. Admin only." });
+    try {
+        const authHeader = req.headers.authorization;
+        
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+            return res.status(401).json({ message: "Authorization token missing" });
+        }
+
+        const token = authHeader.split(" ")[1];
+        const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
+        
+        // Attach user to request
+        req.user = decoded;
+
+        // Check if user is admin
+        if (!req.user || req.user.role !== "admin") {
+            return res.status(403).json({ message: "Access denied. Admin only." });
+        }
+
+        next();
+    } catch (error) {
+        console.error("❌ Admin auth error:", error.message);
+        return res.status(401).json({ message: "Invalid or expired token" });
     }
-    next();
 };
 
 // ─── USER ROUTES ──────────────────────────────────────────────────────────
