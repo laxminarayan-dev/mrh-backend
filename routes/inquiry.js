@@ -9,26 +9,38 @@ const { getIO } = require("../connections/socket");
 const adminMiddleware = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
-        
+
+        console.log("📋 Auth Header received:", authHeader ? authHeader.substring(0, 30) + "..." : "MISSING");
+
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
-            return res.status(401).json({ message: "Authorization token missing" });
+            console.error("❌ Invalid auth header format:", authHeader ? "Wrong format" : "Missing");
+            return res.status(401).json({ message: "Authorization token missing or invalid format" });
         }
 
         const token = authHeader.split(" ")[1];
+        console.log("🔑 Token preview:", token ? token.substring(0, 20) + "..." : "EMPTY");
+
+        if (!token) {
+            return res.status(401).json({ message: "No token provided" });
+        }
+
         const decoded = jwt.verify(token, process.env.JWT_SECRET_KEY);
-        
+
         // Attach user to request
+        console.log("✅ Token decoded. Admin:", decoded._id, "Role:", decoded.role);
         req.user = decoded;
 
         // Check if user is admin
-        if (!req.user || req.user.role !== "admin") {
+        if (!req.user.role || req.user.role !== "admin") {
+            console.error("❌ User role is not admin. Role:", req.user.role);
             return res.status(403).json({ message: "Access denied. Admin only." });
         }
 
         next();
     } catch (error) {
-        console.error("❌ Admin auth error:", error.message);
-        return res.status(401).json({ message: "Invalid or expired token" });
+        console.error("❌ Admin auth error:", error.name, "-", error.message);
+        console.error("   Full error:", error);
+        return res.status(401).json({ message: `Auth failed: ${error.message}` });
     }
 };
 
