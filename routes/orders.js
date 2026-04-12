@@ -19,7 +19,7 @@ router.get("/", async (req, res) => {
 })
 
 // Retrieve orders for the authenticated user
-router.get("/user", authMiddleware, async (req, res) => {
+router.get("/user", authMiddleware, async (req, res, next) => {
     const userId = req.user._id;
     if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
@@ -34,7 +34,7 @@ router.get("/user", authMiddleware, async (req, res) => {
 })
 
 // Place a new order
-router.post("/place", authMiddleware, async (req, res) => {
+router.post("/place", authMiddleware, async (req, res, next) => {
     const session = await Item.startSession();
     let savedOrder = null;
 
@@ -146,7 +146,7 @@ router.delete("/delete/:id", async (req, res) => {
     }
 })
 
-router.put("/review/:id", authMiddleware, async (req, res) => {
+router.put("/review/:id", authMiddleware, async (req, res, next) => {
     try {
         const orderId = req.params.id;
         const review = req.body;

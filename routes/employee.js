@@ -60,7 +60,7 @@ router.post('/', async (req, res) => {
 });
 
 // Update an employee
-router.put('/:id', getEmployee, async (req, res) => {
+router.put('/:id', getEmployee, async (req, res, next) => {
     Object.assign(res.employee, req.body);
     try {
         const updatedEmployee = await res.employee.save();
@@ -80,7 +80,7 @@ router.put('/:id', getEmployee, async (req, res) => {
 });
 
 // Delete an employee
-router.delete('/:id', getEmployee, async (req, res) => {
+router.delete('/:id', getEmployee, async (req, res, next) => {
     try {
         await res.employee.deleteOne();
         const io = getIO();
