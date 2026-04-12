@@ -114,7 +114,7 @@ router.get("/my-inquiries", authMiddleware, async (req, res, next) => {
 // ─── ADMIN ROUTES ──────────────────────────────────────────────────────────
 
 // GET /api/inquiry - Get all inquiries (admin only)
-router.get("/", authMiddleware, adminMiddleware, async (req, res, next) => {
+router.get("/", adminMiddleware, async (req, res, next) => {
     try {
         const { status, category, sortBy = "createdAt" } = req.query;
         let filter = {};
@@ -141,7 +141,7 @@ router.get("/", authMiddleware, adminMiddleware, async (req, res, next) => {
 });
 
 // GET /api/inquiry/:id - Get specific inquiry (admin only)
-router.get("/:id", authMiddleware, adminMiddleware, async (req, res, next) => {
+router.get("/:id", adminMiddleware, async (req, res, next) => {
     try {
         const inquiry = await Inquiry.findById(req.params.id)
             .populate("userId", "fullName email phone")
@@ -168,7 +168,7 @@ router.get("/:id", authMiddleware, adminMiddleware, async (req, res, next) => {
 });
 
 // PUT /api/inquiry/:id/respond - Admin responds to inquiry
-router.put("/:id/respond", authMiddleware, adminMiddleware, async (req, res, next) => {
+router.put("/:id/respond", adminMiddleware, async (req, res, next) => {
     try {
         const { adminResponse } = req.body;
 
@@ -218,7 +218,7 @@ router.put("/:id/respond", authMiddleware, adminMiddleware, async (req, res, nex
 });
 
 // PUT /api/inquiry/:id/status - Update inquiry status (admin only)
-router.put("/:id/status", authMiddleware, adminMiddleware, async (req, res, next) => {
+router.put("/:id/status", adminMiddleware, async (req, res, next) => {
     try {
         const { status } = req.body;
         const validStatuses = ["pending", "read", "resolved", "rejected"];
@@ -263,7 +263,7 @@ router.put("/:id/status", authMiddleware, adminMiddleware, async (req, res, next
 });
 
 // PUT /api/inquiry/:id/priority - Set priority (admin only)
-router.put("/:id/priority", authMiddleware, adminMiddleware, async (req, res, next) => {
+router.put("/:id/priority", adminMiddleware, async (req, res, next) => {
     try {
         const { priority } = req.body;
         const validPriorities = ["low", "medium", "high"];
@@ -306,7 +306,7 @@ router.put("/:id/priority", authMiddleware, adminMiddleware, async (req, res, ne
 });
 
 // DELETE /api/inquiry/:id - Delete inquiry (admin only)
-router.delete("/:id", authMiddleware, adminMiddleware, async (req, res, next) => {
+router.delete("/:id", adminMiddleware, async (req, res, next) => {
     try {
         const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
 
