@@ -36,6 +36,7 @@ app.use("/api/shop", require("./routes/shop"))
 app.use("/api/user", require("./routes/user"))
 app.use("/api/employee", require("./routes/employee"))
 app.use("/api/geocode", require("./routes/geocode"))
+app.use("/api/inquiry", require("./routes/inquiry"))
 
 app.get("/", (req, res) => {
     res.send("Welcome to MR Halwai Backend API");
