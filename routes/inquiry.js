@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const Inquiry = require("../models/Inquiry");
 const authMiddleware = require("../middlewares/authMiddleware");
+const { getIO } = require("../connections/socket");
 
 // Middleware to check if user is admin
 const adminMiddleware = (req, res, next) => {
@@ -15,7 +16,6 @@ const adminMiddleware = (req, res, next) => {
 
 // POST /api/inquiry/submit - User submits an inquiry
 router.post("/submit", authMiddleware, async (req, res, next) => {
-    console.log("this ---------------- ", req.user)
     try {
         const { fullName, email, inquiry, category } = req.body;
 
@@ -58,6 +58,22 @@ router.post("/submit", authMiddleware, async (req, res, next) => {
         const savedInquiry = await newInquiry.save();
 
         console.log("✅ New inquiry submitted:", savedInquiry._id);
+
+        // Emit new inquiry event to admin room
+        const io = getIO();
+        if (io) {
+            io.emit("inquiry-new", {
+                _id: savedInquiry._id,
+                userId: savedInquiry.userId,
+                fullName: savedInquiry.fullName,
+                email: savedInquiry.email,
+                inquiry: savedInquiry.inquiry,
+                category: savedInquiry.category,
+                status: savedInquiry.status,
+                priority: savedInquiry.priority,
+                createdAt: savedInquiry.createdAt
+            });
+        }
 
         res.status(201).json({
             message: "Inquiry submitted successfully",
@@ -176,6 +192,21 @@ router.put("/:id/respond", authMiddleware, adminMiddleware, async (req, res, nex
 
         console.log("Inquiry responded:", updatedInquiry._id);
 
+        // Emit inquiry responded event to user's private room
+        const io = getIO();
+        if (io) {
+            // Notify user of response
+            io.to(inquiry.userId.toString()).emit("inquiry-responded", {
+                inquiryId: updatedInquiry._id,
+                adminResponse: updatedInquiry.adminResponse,
+                respondedAt: updatedInquiry.respondedAt,
+                respondedBy: updatedInquiry.respondedBy,
+                status: updatedInquiry.status
+            });
+            // Also notify admin dashboard of the update
+            io.emit("inquiry-updated", updatedInquiry);
+        }
+
         res.status(200).json({
             message: "Response added successfully",
             inquiry: updatedInquiry
@@ -210,6 +241,17 @@ router.put("/:id/status", authMiddleware, adminMiddleware, async (req, res, next
 
         console.log(`Inquiry ${req.params.id} status updated to ${status}`);
 
+        // Emit status update event
+        const io = getIO();
+        if (io) {
+            io.to(inquiry.userId.toString()).emit("inquiry-status-changed", {
+                inquiryId: inquiry._id,
+                status: inquiry.status,
+                updatedAt: inquiry.updatedAt
+            });
+            io.emit("inquiry-updated", inquiry);
+        }
+
         res.status(200).json({
             message: "Status updated successfully",
             inquiry
@@ -242,6 +284,17 @@ router.put("/:id/priority", authMiddleware, adminMiddleware, async (req, res, ne
             return res.status(404).json({ message: "Inquiry not found" });
         }
 
+        // Emit priority update event
+        const io = getIO();
+        if (io) {
+            io.to(inquiry.userId.toString()).emit("inquiry-priority-changed", {
+                inquiryId: inquiry._id,
+                priority: inquiry.priority,
+                updatedAt: inquiry.updatedAt
+            });
+            io.emit("inquiry-updated", inquiry);
+        }
+
         res.status(200).json({
             message: "Priority updated successfully",
             inquiry
@@ -262,6 +315,15 @@ router.delete("/:id", authMiddleware, adminMiddleware, async (req, res, next) =>
         }
 
         console.log("Inquiry deleted:", inquiry._id);
+
+        // Emit inquiry deleted event
+        const io = getIO();
+        if (io) {
+            io.to(inquiry.userId.toString()).emit("inquiry-deleted", {
+                inquiryId: inquiry._id
+            });
+            io.emit("inquiry-removed", { inquiryId: inquiry._id });
+        }
 
         res.status(200).json({
             message: "Inquiry deleted successfully"
