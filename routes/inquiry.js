@@ -18,6 +18,17 @@ router.post("/submit", authMiddleware, async (req, res) => {
     try {
         const { fullName, email, inquiry, category } = req.body;
 
+        // Debug: Check if req.user exists
+        if (!req.user) {
+            console.error("❌ req.user is undefined after authMiddleware");
+            return res.status(401).json({ message: "User not authenticated" });
+        }
+
+        if (!req.user._id) {
+            console.error("❌ req.user._id is undefined. req.user:", req.user);
+            return res.status(401).json({ message: "User ID not found in token" });
+        }
+
         // Validate required fields
         if (!fullName || !email || !inquiry) {
             return res.status(400).json({
@@ -34,7 +45,7 @@ router.post("/submit", authMiddleware, async (req, res) => {
 
         // Create new inquiry
         const newInquiry = new Inquiry({
-            userId: req.user.id,
+            userId: req.user._id,
             fullName: fullName.trim(),
             email: email.toLowerCase().trim(),
             inquiry: inquiry.trim(),
@@ -44,22 +55,31 @@ router.post("/submit", authMiddleware, async (req, res) => {
 
         const savedInquiry = await newInquiry.save();
 
-        console.log("New inquiry submitted:", savedInquiry._id);
+        console.log("✅ New inquiry submitted:", savedInquiry._id);
 
         res.status(201).json({
             message: "Inquiry submitted successfully",
             inquiry: savedInquiry
         });
     } catch (error) {
-        console.error("Error submitting inquiry:", error);
-        res.status(500).json({ message: "Failed to submit inquiry" });
+        console.error("❌ Error submitting inquiry:", error.message);
+
+        // Handle validation errors specifically
+        if (error.name === "ValidationError") {
+            const messages = Object.values(error.errors)
+                .map(err => err.message)
+                .join(", ");
+            return res.status(400).json({ message: `Validation failed: ${messages}` });
+        }
+
+        res.status(500).json({ message: "Failed to submit inquiry", error: error.message });
     }
 });
 
 // GET /api/inquiry/my-inquiries - Get user's own inquiries
 router.get("/my-inquiries", authMiddleware, async (req, res) => {
     try {
-        const inquiries = await Inquiry.find({ userId: req.user.id })
+        const inquiries = await Inquiry.find({ userId: req.user._id })
             .sort({ createdAt: -1 })
             .select("-adminResponse -respondedBy");
 
@@ -147,9 +167,9 @@ router.put("/:id/respond", authMiddleware, adminMiddleware, async (req, res) => 
 
         // Update inquiry with response
         inquiry.adminResponse = adminResponse.trim();
-        inquiry.respondedBy = req.user.id;
+        inquiry.respondedBy = req.user._id;
         inquiry.respondedAt = new Date();
-        inquiry.status = "resolved";
+        inquiry.status = "read";
 
         const updatedInquiry = await inquiry.save();
 

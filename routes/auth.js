@@ -46,7 +46,12 @@ const generateToken = (user) => {
     }
 
     return jwt.sign(
-        { ...user._doc, password: undefined },
+        {
+            _id: user._id?.toString() || user._doc?._id?.toString(),
+            id: user._id?.toString() || user._doc?._id?.toString(),
+            ...user._doc,
+            password: undefined
+        },
         JWT_KEY,
         { expiresIn: "180d" }
     );
