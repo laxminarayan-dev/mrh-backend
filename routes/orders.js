@@ -261,6 +261,53 @@ router.put("/:id/status", async (req, res) => {
     }
 })
 
+// PUT /api/orders/:id/payment - Update payment status
+router.put("/:id/payment", async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { paymentStatus } = req.body;
+
+        if (!paymentStatus) {
+            return res.status(400).send({ message: "Payment status is required" });
+        }
+
+        console.log(`💳 Rider updating order ${orderId} payment status to: ${paymentStatus}`);
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            { paymentStatus, paymentUpdatedAt: new Date() },
+            { new: true }
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).send({ message: "Order not found" });
+        }
+
+        const io = getIO();
+        if (io) {
+            // Notify user about payment status change
+            io.to(updatedOrder.userId.toString()).emit("payment-updated", updatedOrder);
+
+            // Notify admin about payment status change
+            io.emit("admin-payment-updated", updatedOrder);
+
+            // Notify rider about confirmation
+            if (updatedOrder.riderInfo?._id) {
+                io.to(updatedOrder.riderInfo._id.toString()).emit("payment-confirmed", updatedOrder);
+            }
+
+            console.log(`✅ Payment status updated & broadcast: ${updatedOrder._id} → ${paymentStatus}`);
+        } else {
+            console.warn("Socket IO not initialized");
+        }
+
+        res.send({ message: "Payment status updated", order: updatedOrder });
+    } catch (error) {
+        console.error("❌ Error updating payment status:", error);
+        res.status(500).send({ message: "Failed to update payment status" });
+    }
+})
+
 router.put("/review/:id", authMiddleware, async (req, res, next) => {
     try {
         const orderId = req.params.id;
