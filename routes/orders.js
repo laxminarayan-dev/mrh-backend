@@ -25,9 +25,24 @@ router.get("/reviews", async (req, res) => {
             .select("userId shopId review createdAt updatedAt")
             .sort({ updatedAt: -1 });
 
+        const userIds = [...new Set(
+            reviewedOrders
+                .map((order) => order.userId?.toString())
+                .filter(Boolean)
+        )];
+
+        const users = await User.find({ _id: { $in: userIds } })
+            .select("_id fullName")
+            .lean();
+
+        const userNameById = new Map(
+            users.map((user) => [user._id.toString(), user.fullName])
+        );
+
         const reviews = reviewedOrders.map((order) => ({
             orderId: order._id,
             userId: order.userId,
+            userName: userNameById.get(order.userId?.toString()) || "Anonymous User",
             shopId: order.shopId,
             rating: order.review?.rating,
             comment: order.review?.comment,
