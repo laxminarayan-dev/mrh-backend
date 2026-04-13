@@ -28,6 +28,7 @@ app.use(
 
 // Orders Routes
 app.use("/api/orders", orderRoute);
+app.use("/api/order", orderRoute);  // Alias for rider app compatibility
 app.use("/api/rider", require("./routes/rider"))
 app.use("/api/items", require("./routes/items"))
 app.use("/api/transactions", transactionRoute);

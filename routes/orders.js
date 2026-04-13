@@ -214,6 +214,53 @@ router.delete("/delete/:id", async (req, res) => {
     }
 })
 
+// Rider-friendly route: PUT /api/orders/:id/status - Update only order status
+router.put("/:id/status", async (req, res) => {
+    try {
+        const orderId = req.params.id;
+        const { status } = req.body;
+
+        if (!status) {
+            return res.status(400).send({ message: "Status is required" });
+        }
+
+        console.log(`🚗 Rider updating order ${orderId} status to: ${status}`);
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            { status },
+            { new: true }
+        );
+
+        if (!updatedOrder) {
+            return res.status(404).send({ message: "Order not found" });
+        }
+
+        const io = getIO();
+        if (io) {
+            // Notify user about status change
+            io.to(updatedOrder.userId.toString()).emit("order-updated", updatedOrder);
+
+            // Notify admin about status change
+            io.emit("admin-order-updated", updatedOrder);
+
+            // Notify rider about confirmation
+            if (updatedOrder.riderInfo?._id) {
+                io.to(updatedOrder.riderInfo._id.toString()).emit("order-status-updated", updatedOrder);
+            }
+
+            console.log(`✅ Order status updated & broadcast: ${updatedOrder._id} → ${status}`);
+        } else {
+            console.warn("Socket IO not initialized");
+        }
+
+        res.send({ message: "Order status updated", order: updatedOrder });
+    } catch (error) {
+        console.error("❌ Error updating order status:", error);
+        res.status(500).send({ message: "Failed to update order status" });
+    }
+})
+
 router.put("/review/:id", authMiddleware, async (req, res, next) => {
     try {
         const orderId = req.params.id;
