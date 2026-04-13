@@ -218,7 +218,7 @@ router.put("/:id/respond", adminMiddleware, async (req, res, next) => {
         inquiry.adminResponse = adminResponse.trim();
         inquiry.respondedBy = req.user._id;
         inquiry.respondedAt = new Date();
-        inquiry.status = "read";
+        inquiry.status = "responded";
 
         const updatedInquiry = await inquiry.save();
 
@@ -253,7 +253,7 @@ router.put("/:id/respond", adminMiddleware, async (req, res, next) => {
 router.put("/:id/status", adminMiddleware, async (req, res, next) => {
     try {
         const { status } = req.body;
-        const validStatuses = ["pending", "read", "resolved", "rejected"];
+        const validStatuses = ["pending", "read", "responded", "resolved", "rejected"];
 
         if (!status || !validStatuses.includes(status)) {
             return res.status(400).json({

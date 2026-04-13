@@ -37,8 +37,8 @@ const inquirySchema = new mongoose.Schema({
     status: {
         type: String,
         enum: {
-            values: ['pending', 'read', 'resolved', 'rejected'],
-            message: 'Status must be one of: pending, read, resolved, rejected'
+            values: ['pending', 'read', 'responded', 'resolved', 'rejected'],
+            message: 'Status must be one of: pending, read, responded, resolved, rejected'
         },
         default: 'pending'
     },
