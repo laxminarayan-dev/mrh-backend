@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 const users = new Map();
 const Employee = require('../models/EmpModel');
+const { Order } = require("../models/Order");
 let io = null;
 
 // Track riders by ID -> socket ID for reliable messaging
@@ -28,6 +29,7 @@ const CreateSocket = (http) => {
 
         socket.on("join-user-room", (userId) => {
             socket.join(userId);
+            socket.join(`user:${userId}`);
             socket.userId = userId; // optional tracking
             console.log(`${socket.id} joined private room: ${userId}`);
         });
@@ -42,8 +44,43 @@ const CreateSocket = (http) => {
         socket.on("leave-user-room", () => {
             if (socket.userId) {
                 socket.leave(socket.userId);
+                socket.leave(`user:${socket.userId}`);
                 console.log(`${socket.id} left private room: ${socket.userId}`);
                 socket.userId = null;
+            }
+        });
+
+        // Rider app emits periodic GPS updates while moving.
+        // Forward the update to the specific user room for live ETA/tracking UI.
+        socket.on("rider-location-update", async (data = {}) => {
+            try {
+                const payload = typeof data === "object" ? data : {};
+                console.log("Riders locatoin update:", payload)
+                const orderId = payload.orderId || payload?.order?._id;
+                let userId = payload.userId || payload?.order?.userId;
+
+                if (!userId && orderId) {
+                    const order = await Order.findById(orderId).select("userId").lean();
+                    userId = order?.userId;
+                }
+
+                if (!userId) {
+                    console.warn("⚠️ rider-location-update dropped: missing userId/orderId", payload);
+                    return;
+                }
+
+                const liveLocationPayload = {
+                    ...payload,
+                    orderId: orderId || payload.orderId,
+                    userId: String(userId),
+                    riderId: payload.riderId || socket.riderId || payload?.rider?._id,
+                    timestamp: payload.timestamp || Date.now(),
+                };
+
+                io.to(String(userId)).emit("rider-location-update", liveLocationPayload);
+                io.to(`user:${String(userId)}`).emit("rider-location-update", liveLocationPayload);
+            } catch (err) {
+                console.error("❌ Error forwarding rider-location-update:", err);
             }
         });
 
