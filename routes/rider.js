@@ -157,12 +157,22 @@ router.get('/pending-orders/:riderId', async (req, res) => {
         console.log(`📥 Fetching pending orders for rider: ${riderId}`);
 
         // Find orders assigned to this rider with status "assigned" or "out-for-delivery"
+        // Also populate shop and user data
         const pendingOrders = await Order.find({
             'riderInfo._id': riderId,
             status: { $in: ['assigned', 'out-for-delivery'] }
-        }).sort({ createdAt: -1 });
+        })
+            .populate({
+                path: 'shopId',
+                select: 'name shopLocation shopContact code'
+            })
+            .populate({
+                path: 'userId',
+                select: 'fullName phone email'
+            })
+            .sort({ createdAt: -1 });
 
-        console.log(`✅ Found ${pendingOrders.length} pending orders for rider ${riderId}`);
+        console.log(`✅ Found ${pendingOrders.length} pending orders with shop data for rider ${riderId}`);
         res.json({
             message: 'Pending orders fetched',
             count: pendingOrders.length,

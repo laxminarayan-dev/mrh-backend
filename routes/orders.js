@@ -3,6 +3,7 @@ const router = express.Router();
 const User = require("../models/UserModel");
 const { Order } = require("../models/Order");
 const { Item } = require("../models/ItemModel");
+const Shop = require("../models/ShopModel");
 const { getIO, emitOrderAssigned } = require("../connections/socket");
 const authMiddleware = require("../middlewares/authMiddleware");
 
@@ -161,7 +162,24 @@ router.put("/update/:id", async (req, res) => {
         if (io) {
             // If order is being assigned to a rider
             if (updatedOrder.status === "assigned" && updatedOrder.riderInfo?._id) {
-                emitOrderAssigned(updatedOrder.riderInfo._id, updatedOrder);
+                // Populate shop data before emitting to rider
+                try {
+                    const populatedOrder = await Order.findById(orderId).populate({
+                        path: 'shopId',
+                        select: 'name shopLocation shopContact code'
+                    });
+
+                    if (populatedOrder) {
+                        console.log(`🏪 Sending order with shop data to rider: ${populatedOrder.shopId?.name}`);
+                        emitOrderAssigned(updatedOrder.riderInfo._id, populatedOrder);
+                    } else {
+                        console.warn("⚠️ Could not populate shop data, sending raw order");
+                        emitOrderAssigned(updatedOrder.riderInfo._id, updatedOrder);
+                    }
+                } catch (populateErr) {
+                    console.error("⚠️ Error populating shop data:", populateErr);
+                    emitOrderAssigned(updatedOrder.riderInfo._id, updatedOrder);
+                }
             } else if (updatedOrder.status === "assigned" && !updatedOrder.riderInfo?._id) {
                 console.warn("⚠️ Order marked as assigned but riderInfo._id is missing!");
             }
