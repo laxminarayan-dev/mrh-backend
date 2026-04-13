@@ -156,21 +156,78 @@ router.get('/pending-orders/:riderId', async (req, res) => {
         const riderId = req.params.riderId;
         console.log(`📥 Fetching pending orders for rider: ${riderId}`);
 
-        // Find orders assigned to this rider with status "assigned" or "out-for-delivery"
-        // Also populate shop and user data
-        const pendingOrders = await Order.find({
-            'riderInfo._id': riderId,
-            status: { $in: ['assigned', 'out-for-delivery'] }
-        })
-            .populate({
-                path: 'shopId',
-                select: 'name shopLocation shopContact code'
-            })
-            .populate({
-                path: 'userId',
-                select: 'fullName phone email'
-            })
-            .sort({ createdAt: -1 });
+        // Find orders assigned to this rider with shop and user data using aggregation
+        const pendingOrders = await Order.aggregate([
+            {
+                $match: {
+                    "riderInfo._id": riderId,
+                    status: { $in: ['assigned', 'out-for-delivery'] }
+                }
+            },
+            {
+                $lookup: {
+                    from: "shops",
+                    localField: "shopId",
+                    foreignField: "_id",
+                    as: "shop",
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                name: 1,
+                                shopLocation: 1,
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind: "$shop"
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "userId",
+                    foreignField: "_id",
+                    as: "user",
+                    pipeline: [
+                        {
+                            $project: {
+                                _id: 1,
+                                fullName: 1,
+                                phone: 1,
+                            }
+                        }
+                    ]
+                }
+            },
+            {
+                $unwind: {
+                    path: "$user",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            {
+                $project: {
+                    _id: 1,
+                    status: 1,
+                    totalAmount: 1,
+                    paymentMethod: 1,
+                    "deliveryAddress.formattedAddress": 1,
+                    "deliveryAddress.coordinates": 1,
+                    createdAt: 1,
+                    orderItems: 1,
+                    shop: 1,
+                    riderInfo: 1,
+                    "user._id": 1,
+                    "user.fullName": 1,
+                    "user.phone": 1,
+                }
+            },
+            {
+                $sort: { createdAt: -1 }
+            }
+        ]);
 
         console.log(`✅ Found ${pendingOrders.length} pending orders with shop data for rider ${riderId}`);
         res.json({
