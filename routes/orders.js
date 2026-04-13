@@ -18,6 +18,35 @@ router.get("/", async (req, res) => {
     }
 })
 
+// Return submitted reviews from orders
+router.get("/reviews", async (req, res) => {
+    try {
+        const reviewedOrders = await Order.find({ "review.submitted": true })
+            .select("userId shopId review createdAt updatedAt")
+            .sort({ updatedAt: -1 });
+
+        const reviews = reviewedOrders.map((order) => ({
+            orderId: order._id,
+            userId: order.userId,
+            shopId: order.shopId,
+            rating: order.review?.rating,
+            comment: order.review?.comment,
+            submitted: order.review?.submitted,
+            createdAt: order.createdAt,
+            updatedAt: order.updatedAt,
+        }));
+
+        res.status(200).json({
+            message: "Submitted reviews fetched",
+            count: reviews.length,
+            reviews,
+        });
+    } catch (error) {
+        console.error("Error fetching submitted reviews:", error);
+        res.status(500).json({ message: "Failed to fetch submitted reviews" });
+    }
+})
+
 // Retrieve orders for the authenticated user
 router.get("/user", authMiddleware, async (req, res, next) => {
     const userId = req.user._id;
