@@ -3,7 +3,7 @@ const router = express.Router();
 const User = require("../models/UserModel");
 const { Order } = require("../models/Order");
 const { Item } = require("../models/ItemModel");
-const { getIO } = require("../connections/socket");
+const { getIO, emitOrderAssigned } = require("../connections/socket");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 
@@ -151,26 +151,32 @@ router.post("/place", authMiddleware, async (req, res, next) => {
 router.put("/update/:id", async (req, res) => {
     try {
         const orderId = req.params.id;
-        console.log("Updating order with ID:", orderId, "and body:", req.body);
+        console.log("📝 Updating order with ID:", orderId, "and body:", req.body);
         const updatedOrder = await Order.findByIdAndUpdate(orderId, req.body, { new: true });
         if (!updatedOrder) {
             return res.status(404).send({ message: "Order not found" });
         }
         const io = getIO();
 
-
         if (io) {
-            if (updatedOrder.status === "assigned") {
-                io.to(updatedOrder.riderInfo._id.toString()).emit("order-assigned", updatedOrder);
+            // If order is being assigned to a rider
+            if (updatedOrder.status === "assigned" && updatedOrder.riderInfo?._id) {
+                emitOrderAssigned(updatedOrder.riderInfo._id, updatedOrder);
+            } else if (updatedOrder.status === "assigned" && !updatedOrder.riderInfo?._id) {
+                console.warn("⚠️ Order marked as assigned but riderInfo._id is missing!");
             }
+
+            // Notify user about order update
             io.to(updatedOrder.userId.toString()).emit("order-updated", updatedOrder);
+
+            // Notify admin about order update
             io.emit("admin-order-updated", updatedOrder);
         } else {
             console.warn("Socket IO not initialized yet — cannot emit 'order-updated'");
         }
         res.send({ message: "Order updated", order: updatedOrder });
     } catch (error) {
-        console.error("Error updating order:", error);
+        console.error("❌ Error updating order:", error);
         res.status(500).send({ message: "Failed to update order" });
     }
 })

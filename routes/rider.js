@@ -117,17 +117,59 @@ router.get('/orders/:riderId', async (req, res) => {
 
 router.post('/status/:id', async (req, res) => {
     try {
-        const updatedEmployee = await Employee.findByIdAndUpdate(req.params.id, { isActive: req.body.isActive }, { new: true });
+        const riderId = req.params.id;
+        const { isActive } = req.body;
+
+        console.log(`🚴 Updating rider ${riderId} status: isActive=${isActive}`);
+
+        const updatedEmployee = await Employee.findByIdAndUpdate(
+            riderId,
+            {
+                isActive: isActive,
+                lastStatusUpdateAt: new Date()
+            },
+            { new: true }
+        );
+
+        if (!updatedEmployee) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
         const io = getIO();
         if (io) {
             io.emit('admin-empupdate', updatedEmployee);
-            console.log('Employee updated socket:', updatedEmployee.isActive);
-        }
-        else {
+            console.log(`✅ Rider status updated & broadcasted: ${updatedEmployee.name} (${isActive ? 'ONLINE' : 'OFFLINE'})`);
+        } else {
             console.warn('Socket.io instance not found. Real-time updates will not be sent.');
         }
         res.json(updatedEmployee);
     } catch (err) {
+        console.error('❌ Error updating rider status:', err);
+        res.status(400).json({ message: err.message });
+    }
+});
+
+// GET /api/rider/pending-orders/:riderId - Fetch unread/pending assigned orders
+// Fallback mechanism if rider missed socket event while connecting
+router.get('/pending-orders/:riderId', async (req, res) => {
+    try {
+        const riderId = req.params.riderId;
+        console.log(`📥 Fetching pending orders for rider: ${riderId}`);
+
+        // Find orders assigned to this rider with status "assigned" or "out-for-delivery"
+        const pendingOrders = await Order.find({
+            'riderInfo._id': riderId,
+            status: { $in: ['assigned', 'out-for-delivery'] }
+        }).sort({ createdAt: -1 });
+
+        console.log(`✅ Found ${pendingOrders.length} pending orders for rider ${riderId}`);
+        res.json({
+            message: 'Pending orders fetched',
+            count: pendingOrders.length,
+            orders: pendingOrders
+        });
+    } catch (err) {
+        console.error('❌ Error fetching pending orders:', err);
         res.status(400).json({ message: err.message });
     }
 });

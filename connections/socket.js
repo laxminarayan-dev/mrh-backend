@@ -2,6 +2,10 @@ const { Server } = require("socket.io");
 const users = new Map();
 const Employee = require('../models/EmpModel');
 let io = null;
+
+// Track riders by ID -> socket ID for reliable messaging
+const riderSockets = new Map();
+
 const CreateSocket = (http) => {
     io = new Server(http, {
         cors: {
@@ -31,7 +35,8 @@ const CreateSocket = (http) => {
         socket.on("join:rider", (riderId) => {
             socket.join(riderId);
             socket.riderId = riderId;
-            console.log(`${socket.id} joined private room: ${riderId}`);
+            riderSockets.set(riderId, socket.id);
+            console.log(`🔗 Rider ${riderId} joined socket room (${socket.id})`);
         });
 
         socket.on("leave-user-room", () => {
@@ -45,13 +50,18 @@ const CreateSocket = (http) => {
         socket.on("disconnect", async () => {
             if (socket.riderId) {
                 try {
+                    // Remove rider from tracking map
+                    riderSockets.delete(socket.riderId);
+
+                    // Mark rider as offline in database
                     await Employee.findByIdAndUpdate(socket.riderId, {
-                        isActive: false
+                        isActive: false,
+                        lastSeenAt: new Date()
                     });
                     io.emit('admin-empupdate');
-                    console.log(`Rider ${socket.riderId} marked offline`);
+                    console.log(`🔌 Rider ${socket.riderId} marked OFFLINE (disconnected socket)`);
                 } catch (err) {
-                    console.error("Error updating rider status:", err);
+                    console.error("Error updating rider status on disconnect:", err);
                 }
             }
         });
@@ -67,4 +77,28 @@ const getIO = () => {
     return io;
 };
 
-module.exports = { CreateSocket, getIO };
+/**
+ * Emit order assigned event to rider with fallback
+ * @param {string} riderId - Rider's ID
+ * @param {object} order - Order object
+ */
+const emitOrderAssigned = (riderId, order) => {
+    if (!io || !riderId) return;
+
+    try {
+        // Primary: Emit to rider's private room
+        io.to(riderId.toString()).emit("order-assigned", order);
+        console.log(`📦 Order assigned emitted to rider room: ${riderId}`);
+
+        // Fallback: If rider socket exists but might not be listening, also emit globally
+        if (riderSockets.has(riderId.toString())) {
+            console.log(`✅ Rider ${riderId} has active socket`);
+        } else {
+            console.warn(`⚠️ Rider ${riderId} not in active sockets - message queued on their room`);
+        }
+    } catch (err) {
+        console.error(`❌ Error emitting order assigned to rider ${riderId}:`, err);
+    }
+};
+
+module.exports = { CreateSocket, getIO, emitOrderAssigned, riderSockets };
