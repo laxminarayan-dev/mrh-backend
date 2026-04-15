@@ -94,9 +94,13 @@ router.post("/place", authMiddleware, async (req, res, next) => {
         await session.withTransaction(async () => {
             for (const item of orderItems) {
                 console.log("Validating item:", item);
-                let itemPrice = item.isSale ? item.discountPrice : item.originalPrice;
+                // let itemPrice = item.isSale ? item.discountPrice : item.originalPrice;
+                let itemPrice = item.price
+
 
                 const storedItem = await Item.findById(item._id).session(session);
+                console.log("Stored Item:", storedItem)
+                let storedItemPrice = storedItem?.isSale ? storedItem?.discountPrice : storedItem?.originalPrice;
 
                 if (!storedItem) {
                     const notFoundError = new Error(`Item with ID ${item._id} not found`);
@@ -104,7 +108,7 @@ router.post("/place", authMiddleware, async (req, res, next) => {
                     throw notFoundError;
                 }
 
-                if (itemPrice !== storedItem.price) {
+                if (itemPrice !== storedItemPrice) {
                     const priceError = new Error(`Price mismatch for item ${item.name}`);
                     priceError.status = 400;
                     throw priceError;
