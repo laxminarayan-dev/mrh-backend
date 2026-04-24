@@ -71,7 +71,7 @@ router.post("/add", upload.single("image"), async (req, res) => {
         }
 
         // ✅ FIX: Parse JSON fields
-        const parseJSONFields = ["includes", "timings", "days"];
+        const parseJSONFields = ["includes", "timings", "days", "availableTimings", "availableDays"];
 
         parseJSONFields.forEach(field => {
             if (req.body[field]) {
@@ -83,8 +83,25 @@ router.post("/add", upload.single("image"), async (req, res) => {
             }
         });
 
+        // ✅ Map frontend field names to backend field names
+        const fieldMapping = {
+            onSale: 'isSale',
+            specialItem: 'isSpecial',
+            newArrival: 'isNewArrival',
+            bestSeller: 'isBestSeller',
+            available: 'isAvailable',
+            timings: 'availableTimings',
+            days: 'availableDays',
+        };
+
+        const mappedData = {};
+        Object.entries(req.body).forEach(([key, val]) => {
+            const mappedKey = fieldMapping[key] || key;
+            mappedData[mappedKey] = val;
+        });
+
         const newItem = new Item({
-            ...req.body,
+            ...mappedData,
             images: {
                 url: `/uploads/images/${req.file.filename}`,
                 alt: req.body?.imageAlt || "",
@@ -112,7 +129,7 @@ router.put("/update/:id", upload.single("image"), async (req, res) => {
         const itemId = req.params.id;
 
         // ✅ FIX: Parse JSON fields
-        const parseJSONFields = ["includes", "timings", "days"];
+        const parseJSONFields = ["includes", "timings", "days", "availableTimings", "availableDays"];
 
         parseJSONFields.forEach(field => {
             if (req.body[field]) {
@@ -124,7 +141,24 @@ router.put("/update/:id", upload.single("image"), async (req, res) => {
             }
         });
 
-        const updateData = { ...req.body };
+        // ✅ Map frontend field names to backend field names
+        const fieldMapping = {
+            onSale: 'isSale',
+            specialItem: 'isSpecial',
+            newArrival: 'isNewArrival',
+            bestSeller: 'isBestSeller',
+            available: 'isAvailable',
+            timings: 'availableTimings',
+            days: 'availableDays',
+        };
+
+        const mappedData = {};
+        Object.entries(req.body).forEach(([key, val]) => {
+            const mappedKey = fieldMapping[key] || key;
+            mappedData[mappedKey] = val;
+        });
+
+        let updateData = { ...mappedData };
 
         if (req.file) {
             updateData.images = {
