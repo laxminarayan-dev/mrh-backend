@@ -118,6 +118,8 @@ router.post("/place", authMiddleware, async (req, res, next) => {
             // Create new order document
             const newOrder = new Order({
                 ...req.body, // orderItems, pricing, deliveryAddress, payment details
+                assignedAt: null,
+                deliveredAt: null,
             });
             savedOrder = await newOrder.save({ session });
             if (!savedOrder) {
@@ -157,7 +159,12 @@ router.put("/update/:id", async (req, res) => {
     try {
         const orderId = req.params.id;
         console.log("📝 Updating order with ID:", orderId, "and body:", req.body);
-        const updatedOrder = await Order.findByIdAndUpdate(orderId, req.body, { new: true });
+
+        const updatedOrder = await Order.findByIdAndUpdate(
+            orderId,
+            req.body,
+            { new: true, runValidators: true }
+        );
         if (!updatedOrder) {
             return res.status(404).send({ message: "Order not found" });
         }
@@ -231,9 +238,15 @@ router.put("/:id/status", async (req, res) => {
 
         console.log(`🚗 Rider updating order ${orderId} status to: ${status}`);
 
+        // If status is changing to "delivered", set deliveredAt timestamp
+        const updateData = { status };
+        if (status === "delivered") {
+            updateData.deliveredAt = new Date();
+        }
+
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
-            { status },
+            updateData,
             { new: true }
         );
 
