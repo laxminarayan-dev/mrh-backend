@@ -51,34 +51,44 @@ const CreateSocket = (http) => {
         });
 
         // Rider app emits periodic GPS updates while moving.
-        // Forward the update to the specific user room for live ETA/tracking UI.
+        // Query database to find all active orders assigned to this rider,
+        // then forward location to each user on their order
         socket.on("rider-location-update", async (data = {}) => {
             try {
-                const payload = typeof data === "object" ? data : {};
-                console.log("Riders locatoin update:", payload)
-                const orderId = payload.orderId || payload?.order?._id;
-                let userId = payload.userId || payload?.order?.userId;
-
-                if (!userId && orderId) {
-                    const order = await Order.findById(orderId).select("userId").lean();
-                    userId = order?.userId;
-                }
-
-                if (!userId) {
-                    console.warn("⚠️ rider-location-update dropped: missing userId/orderId", payload);
+                if (!socket.riderId) {
+                    console.warn("⚠️ rider-location-update dropped: rider not joined");
                     return;
                 }
 
-                const liveLocationPayload = {
-                    ...payload,
-                    orderId: orderId || payload.orderId,
-                    userId: String(userId),
-                    riderId: payload.riderId || socket.riderId || payload?.rider?._id,
-                    timestamp: payload.timestamp || Date.now(),
-                };
+                const payload = typeof data === "object" ? data : {};
+                console.log("Riders location update:", payload);
 
-                io.to(String(userId)).emit("rider-location-update", liveLocationPayload);
-                io.to(`user:${String(userId)}`).emit("rider-location-update", liveLocationPayload);
+                // Find all active orders assigned to this rider
+                const activeOrders = await Order.find({
+                    riderInfo: { $exists: true },
+                    "riderInfo._id": socket.riderId,
+                    status: { $in: ["assigned", "out_for_delivery"] }
+                }).select("_id userId").lean();
+
+                if (!activeOrders || activeOrders.length === 0) {
+                    console.warn(`⚠️ No active orders for rider ${socket.riderId}`);
+                    return;
+                }
+
+                // Send location update to all users with orders from this rider
+                activeOrders.forEach((order) => {
+                    const liveLocationPayload = {
+                        ...payload,
+                        orderId: order._id.toString(),
+                        userId: String(order.userId),
+                        riderId: socket.riderId,
+                        timestamp: payload.timestamp || Date.now(),
+                    };
+
+                    io.to(String(order.userId)).emit("rider-location-update", liveLocationPayload);
+                });
+
+                console.log(`📍 Location update sent to ${activeOrders.length} user(s) for rider ${socket.riderId}`);
             } catch (err) {
                 console.error("❌ Error forwarding rider-location-update:", err);
             }
