@@ -93,13 +93,11 @@ router.post("/place", authMiddleware, async (req, res, next) => {
 
         await session.withTransaction(async () => {
             for (const item of orderItems) {
-                console.log("Validating item:", item);
                 // let itemPrice = item.isSale ? item.discountPrice : item.originalPrice;
                 let itemPrice = item.price
 
 
                 const storedItem = await Item.findById(item._id).session(session);
-                console.log("Stored Item:", storedItem)
                 let storedItemPrice = storedItem?.isSale ? storedItem?.discountPrice : storedItem?.originalPrice;
 
                 if (!storedItem) {
@@ -158,8 +156,6 @@ router.post("/place", authMiddleware, async (req, res, next) => {
 router.put("/update/:id", async (req, res) => {
     try {
         const orderId = req.params.id;
-        console.log("📝 Updating order with ID:", orderId, "and body:", req.body);
-
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
             req.body,
@@ -181,7 +177,6 @@ router.put("/update/:id", async (req, res) => {
                     });
 
                     if (populatedOrder) {
-                        console.log(`🏪 Sending order with shop data to rider: ${populatedOrder.shopId?.name}`);
                         emitOrderAssigned(updatedOrder.riderInfo._id, populatedOrder);
                     } else {
                         console.warn("⚠️ Could not populate shop data, sending raw order");
@@ -236,7 +231,6 @@ router.put("/:id/status", async (req, res) => {
             return res.status(400).send({ message: "Status is required" });
         }
 
-        console.log(`🚗 Rider updating order ${orderId} status to: ${status}`);
 
         // If status is changing to "delivered", set deliveredAt timestamp
         const updateData = { status };
@@ -267,7 +261,6 @@ router.put("/:id/status", async (req, res) => {
                 io.to(updatedOrder.riderInfo._id.toString()).emit("order-status-updated", updatedOrder);
             }
 
-            console.log(`✅ Order status updated & broadcast: ${updatedOrder._id} → ${status}`);
         } else {
             console.warn("Socket IO not initialized");
         }
@@ -289,7 +282,6 @@ router.put("/:id/payment", async (req, res) => {
             return res.status(400).send({ message: "Payment status is required" });
         }
 
-        console.log(`💳 Rider updating order ${orderId} payment status to: ${paymentStatus}`);
 
         const updatedOrder = await Order.findByIdAndUpdate(
             orderId,
@@ -314,7 +306,6 @@ router.put("/:id/payment", async (req, res) => {
                 io.to(updatedOrder.riderInfo._id.toString()).emit("payment-confirmed", updatedOrder);
             }
 
-            console.log(`✅ Payment status updated & broadcast: ${updatedOrder._id} → ${paymentStatus}`);
         } else {
             console.warn("Socket IO not initialized");
         }
