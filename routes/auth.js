@@ -9,8 +9,6 @@ let transporter = null;
 const getTransporter = async () => {
     if (transporter) return transporter;
 
-    console.log(process.env.EMAIL_HOST, process.env.EMAIL_PORT, process.env.EMAIL_SECURE)
-
     transporter = nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
         port: Number(process.env.EMAIL_PORT),
@@ -31,7 +29,6 @@ const getTransporter = async () => {
     try {
         const t = await getTransporter();
         await t.verify();
-        console.log("SMTP ready");
     } catch (err) {
         console.error("SMTP failed", err);
     }
@@ -113,14 +110,11 @@ router.post("/verify-token", async (req, res) => {
 // Login
 router.post("/login", async (req, res) => {
     const { email, password } = req.body || {};
-    console.log("Login attempt with email:", email);
-
     if (!email || !password) {
         return res.status(400).send({ message: "email and password are required" });
     }
     try {
         const user = await User.findOne({ email }).select("+password");
-        console.log(user);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
@@ -307,7 +301,6 @@ router.post("/verify-otp", async (req, res) => {
 
     try {
         const response = await User.create(userDetail);
-        console.log("User registered:", response);
         otpStore.delete(email);
 
         const token = generateToken(response);
