@@ -86,20 +86,9 @@ const CreateSocket = (http) => {
 
         socket.on("disconnect", async () => {
             if (socket.riderId) {
-                try {
-                    // Remove rider from tracking map
-                    riderSockets.delete(socket.riderId);
-
-                    // Mark rider as offline in database
-                    await Employee.findByIdAndUpdate(socket.riderId, {
-                        isActive: false,
-                        lastSeenAt: new Date()
-                    });
-                    io.emit('admin-empupdate');
-                    console.log(`🔌 Rider ${socket.riderId} marked OFFLINE (disconnected socket)`);
-                } catch (err) {
-                    console.error("Error updating rider status on disconnect:", err);
-                }
+                // Remove rider from tracking map
+                riderSockets.delete(socket.riderId);
+                console.log(`🔌 Rider ${socket.riderId} disconnected (socket removed, status unchanged)`);
             }
         });
 
