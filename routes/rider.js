@@ -104,6 +104,10 @@ router.get('/orders/:riderId', async (req, res) => {
                     "user._id": 1,
                     "user.fullName": 1,
                     "user.phone": 1,
+                    assignedAt: 1,
+                    createdAt: 1,
+                    updatedAt: 1,
+                    deliveredAt: 1
                 }
             }
 
