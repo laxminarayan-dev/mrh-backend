@@ -193,6 +193,7 @@ router.put("/update/:id", async (req, res) => {
 
             // Notify admin about order update
             io.emit("admin-order-updated", updatedOrder);
+            io.to(updatedOrder.riderInfo?._id.toString()).emit("rider-order-update", updatedOrder)
         } else {
             console.warn("Socket IO not initialized yet — cannot emit 'order-updated'");
         }

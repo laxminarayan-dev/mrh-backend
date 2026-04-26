@@ -89,6 +89,10 @@ const orderSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
+        deliveredAt: {
+            type: Date,
+            default: null,
+        },
 
         // Review
         review: {
