@@ -5,6 +5,7 @@ const { Order } = require("../models/Order");
 const { Item } = require("../models/ItemModel");
 const Shop = require("../models/ShopModel");
 const { getIO, emitOrderAssigned } = require("../connections/socket");
+const { sendOrderStatusNotification } = require("../utils/pushNotification");
 const authMiddleware = require("../middlewares/authMiddleware");
 
 
@@ -259,6 +260,11 @@ router.put("/:id/status", async (req, res) => {
             // Notify rider about confirmation
             if (updatedOrder.riderInfo?._id) {
                 io.to(updatedOrder.riderInfo._id.toString()).emit("order-status-updated", updatedOrder);
+
+                // Send push notification to rider
+                sendOrderStatusNotification(updatedOrder.riderInfo._id, updatedOrder, status).catch(err => {
+                    console.error(`⚠️ Failed to send status notification:`, err.message);
+                });
             }
 
         } else {
@@ -304,6 +310,11 @@ router.put("/:id/payment", async (req, res) => {
             // Notify rider about confirmation
             if (updatedOrder.riderInfo?._id) {
                 io.to(updatedOrder.riderInfo._id.toString()).emit("payment-confirmed", updatedOrder);
+
+                // Send push notification to rider
+                sendOrderStatusNotification(updatedOrder.riderInfo._id, updatedOrder, 'payment-confirmed').catch(err => {
+                    console.error(`⚠️ Failed to send payment notification:`, err.message);
+                });
             }
 
         } else {

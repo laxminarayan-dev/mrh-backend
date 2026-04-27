@@ -15,6 +15,7 @@ const EmpSchema = new mongoose.Schema({
     password: { type: String, required: true },
     role: { type: String, default: "employee" },
     isActive: { type: Boolean, default: false },
+    tokens: [{ type: String }]  // Expo push notification tokens
 
 })
 const Employee = mongoose.model('Emp', EmpSchema, 'employees');

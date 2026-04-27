@@ -2,6 +2,7 @@ const { Server } = require("socket.io");
 const users = new Map();
 const Employee = require('../models/EmpModel');
 const { Order } = require("../models/Order");
+const { sendOrderAssignmentNotification } = require('../utils/pushNotification');
 let io = null;
 
 // Track riders by ID -> socket ID for reliable messaging
@@ -122,15 +123,20 @@ const emitOrderAssigned = (riderId, order) => {
     if (!io || !riderId) return;
 
     try {
-        // Primary: Emit to rider's private room
+        // Primary: Emit to rider's private room (Socket.io - real-time if online)
         io.to(riderId.toString()).emit("order-assigned", order);
         console.log(`📦 Order assigned emitted to rider room: ${riderId}`);
+
+        // Send push notification (works even if rider is offline)
+        sendOrderAssignmentNotification(riderId, order).catch(err => {
+            console.error(`⚠️ Failed to send push notification:`, err.message);
+        });
 
         // Fallback: If rider socket exists but might not be listening, also emit globally
         if (riderSockets.has(riderId.toString())) {
             console.log(`✅ Rider ${riderId} has active socket`);
         } else {
-            console.warn(`⚠️ Rider ${riderId} not in active sockets - message queued on their room`);
+            console.warn(`⚠️ Rider ${riderId} not in active sockets - push notification sent as fallback`);
         }
     } catch (err) {
         console.error(`❌ Error emitting order assigned to rider ${riderId}:`, err);

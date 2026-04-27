@@ -245,4 +245,40 @@ router.get('/pending-orders/:riderId', async (req, res) => {
     }
 });
 
+
+router.post('/save-token', async (req, res) => {
+    try {
+        const { riderId, expoToken } = req.body;
+
+        if (!riderId || !expoToken) {
+            return res.status(400).json({ message: 'riderId and expoToken are required' });
+        }
+
+        // Find rider and add token if not already present
+        const rider = await Employee.findById(riderId);
+
+        if (!rider) {
+            return res.status(404).json({ message: 'Rider not found' });
+        }
+
+        // Check if token already exists
+        if (!rider.tokens.includes(expoToken)) {
+            rider.tokens.push(expoToken);
+            await rider.save();
+            console.log(`✅ Expo token saved for rider ${rider.name} (${riderId})`);
+        } else {
+            console.log(`ℹ️ Token already exists for rider ${rider.name} (${riderId})`);
+        }
+
+        res.json({
+            message: 'Token saved successfully',
+            riderId: rider._id,
+            tokenCount: rider.tokens.length
+        });
+    } catch (error) {
+        console.error('❌ Error saving token:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 module.exports = router;
