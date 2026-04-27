@@ -1,6 +1,6 @@
 const Employee = require('../models/EmpModel');
 
-const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send?useFcmV1=true';
 
 /**
  * Send push notification to rider
