@@ -25,7 +25,8 @@ const sendPushNotificationToRider = async (riderId, notification) => {
             body: notification.body || 'You have a new order assignment',
             data: notification.data || {},
             badge: 1,
-            priority: 'high'
+            priority: 'high',
+            channelId: 'default',
         }));
 
         // Send to Expo using native fetch
