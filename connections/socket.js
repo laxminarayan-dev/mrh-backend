@@ -4,6 +4,7 @@ const Employee = require('../models/EmpModel');
 const { Order } = require("../models/Order");
 const { sendOrderAssignmentNotification } = require('../utils/pushNotification');
 let io = null;
+let ridersLocation = new Map()
 
 // Track riders by ID -> socket ID for reliable messaging
 const riderSockets = new Map();
@@ -62,6 +63,7 @@ const CreateSocket = (http) => {
                 }
 
                 const payload = typeof data === "object" ? data : {};
+                ridersLocation.set(socket.riderId, payload)
                 console.log("Riders location update:", payload);
 
                 // Find all active orders assigned to this rider
@@ -143,4 +145,4 @@ const emitOrderAssigned = (riderId, order) => {
     }
 };
 
-module.exports = { CreateSocket, getIO, emitOrderAssigned, riderSockets };
+module.exports = { CreateSocket, getIO, emitOrderAssigned, riderSockets, ridersLocation };

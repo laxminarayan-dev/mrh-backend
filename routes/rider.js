@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Order } = require('../models/Order');
 const Employee = require('../models/EmpModel');
-const { getIO } = require("../connections/socket");
+const { getIO, ridersLocation } = require("../connections/socket");
 const { generateToken } = require('./auth');
 
 
@@ -244,6 +244,21 @@ router.get('/pending-orders/:riderId', async (req, res) => {
         res.status(400).json({ message: err.message });
     }
 });
+
+router.get('/rider-location/:riderId', async (req, res) => {
+    const riderId = req.params.riderId;
+    if (!riderId) {
+        res.status(400).json({ message: "no riderId!" })
+        return
+    }
+    const payload = ridersLocation.get(riderId)
+    if (!payload) {
+        res.status(400).json({ message: "no payload found!" })
+        return
+    }
+
+    res.status(200).json({ message: "success", payload })
+})
 
 
 router.post('/save-token', async (req, res) => {
