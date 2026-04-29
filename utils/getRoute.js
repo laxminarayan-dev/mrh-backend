@@ -94,27 +94,31 @@ const getRoute = async (routeCoords) => {
 
         // Calculate ETA between waypoints (segment-based: A-B, B-C, C-D)
         const waypointData = [];
+        let cumulativeDistance = 0;
+        let cumulativeDuration = 0;
 
-        for (let i = 0; i < convertedCoords.length; i++) {
+        for (let i = 0; i < routeCoords.length; i++) {
             if (i === 0) {
                 waypointData.push({
                     index: 0,
                     lat: routeCoords[0][0],
                     lng: routeCoords[0][1],
-                    etaBetween: 0, // Start point, no segment time
-                    distanceBetween: 0 // Start point, no segment distance
+                    etaFromStart: 0,
+                    distFromStart: 0
                 });
             } else {
                 const segment = segments[i - 1];
-                const segmentDistance = segment?.distance || 0;
-                const segmentDuration = segment?.duration || 0;
+
+                // Add current segment to the running total
+                cumulativeDistance += segment?.distance || 0;
+                cumulativeDuration += segment?.duration || 0;
 
                 waypointData.push({
                     index: i,
                     lat: routeCoords[i][0],
                     lng: routeCoords[i][1],
-                    etaBetween: Math.round(segmentDuration), // Time from previous waypoint in seconds
-                    distanceBetween: Math.round(segmentDistance) // Distance from previous waypoint in meters
+                    etaFromStart: Math.round(cumulativeDuration), // Total time from Point A
+                    distFromStart: Math.round(cumulativeDistance) // Total distance from Point A
                 });
             }
         }
