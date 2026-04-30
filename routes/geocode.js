@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { getRoute } = require('../utils/getRoute');
+const { getOptimizedStopOrder } = require("../utils/getOptimizedOrders");
 
 const BatchRoutes = new Map();
 
@@ -149,6 +150,89 @@ router.post("/fetch-route", async (req, res) => {
         console.error("Error fetching route:", error);
         res.status(500).json({
             error: "Failed to fetch route",
+            details: error.message
+        });
+    }
+});
+
+// =========================
+// fetch-optimized-orders
+// ========================
+
+router.post("/fetch-optimized-order", async (req, res) => {
+    try {
+        const { stops } = req.body;
+
+        // 🔹 Basic validation
+        if (!stops) {
+            return res.status(400).json({ error: "stops are required" });
+        }
+
+        if (!Array.isArray(stops) || stops.length < 2) {
+            return res.status(400).json({
+                error: "stops must be array with at least 2 points"
+            });
+        }
+
+        // 🔥 Ensure first stop is rider
+        if (stops[0].type !== "rider") {
+            return res.status(400).json({
+                error: "First stop must be rider"
+            });
+        }
+
+        // 🔥 Validate orderId for all stops except rider
+        const validStops = stops.every((s, i) => {
+            if (i === 0) return s.type === "rider";
+            return s.orderId && typeof s.orderId === "string";
+        });
+
+        if (!validStops) {
+            return res.status(400).json({
+                error: "Each stop (except rider) must have orderId"
+            });
+        }
+
+        // 🔹 Extract coords
+        const coords = stops.map(s => [s.lat, s.lng]);
+
+        // 🔹 Validate coordinates
+        const validCoords = coords.every(coord =>
+            Array.isArray(coord) &&
+            coord.length === 2 &&
+            typeof coord[0] === 'number' &&
+            typeof coord[1] === 'number' &&
+            coord[0] >= -90 && coord[0] <= 90 &&
+            coord[1] >= -180 && coord[1] <= 180
+        );
+
+        if (!validCoords) {
+            return res.status(400).json({
+                error: "Invalid coordinate format"
+            });
+        }
+
+        // 🔹 Fetch route
+        const optimizedOrders = await getOptimizedStopOrder(stops);
+
+        if (!optimizedOrders || !optimizedOrders.success) {
+            return res.status(500).json({
+                error: "Failed to fetch route",
+                details: optimizedOrders?.error || "Unknown error"
+            });
+        }
+
+        res.status(200).json({
+            message: "Orders optimized successfully",
+            payload: {
+                optimizedOrders
+            }
+        });
+
+    } catch (error) {
+        console.error("Error optimizing orders:", error);
+        res.status(500).json({
+            error: "Failed to optimize orders",
             details: error.message
         });
     }
