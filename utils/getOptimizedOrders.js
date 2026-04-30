@@ -1,4 +1,4 @@
-export const getOptimizedStopOrder = async (stops) => {
+const getOptimizedStopOrder = async (stops) => {
     const API_KEY = process.env.ORS_API_KEY;
     const PROFILE = "driving-car"; // Motorbike profile
 
@@ -48,3 +48,5 @@ export const getOptimizedStopOrder = async (stops) => {
         return { success: false, error: error.message };
     }
 };
+
+module.exports = { getOptimizedStopOrder }
